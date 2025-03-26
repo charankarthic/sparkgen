@@ -69,32 +69,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await apiLogin(email, password);
-      if (response?.refreshToken || response?.accessToken) {
+      if (response?.refreshToken && response?.accessToken) {
         localStorage.setItem("refreshToken", response.refreshToken);
         localStorage.setItem("accessToken", response.accessToken);
         setIsAuthenticated(true);
 
-        // Extract user ID from token
-        try {
-          const decoded: any = jwtDecode(response.accessToken);
-          setUserId(decoded.sub || null);
+        // Extract user ID from token or response
+        if (response.user && response.user._id) {
+          setUserId(response.user._id);
+          updateUserContext(response.user);
 
-          // Check if user has a display name after login
-          getUserProfile()
-            .then((profile) => {
-              updateUserContext(profile);
-              if (!profile.displayName) {
-                setNeedsDisplayName(true);
-              }
-            })
-            .catch((error) => {
-              console.error("Error fetching user profile:", error);
-            });
-        } catch (error) {
-          console.error("Error decoding token:", error);
+          if (!response.user.displayName) {
+            setNeedsDisplayName(true);
+          }
+        } else {
+          // If user data is not included, fetch it
+          try {
+            const profileData = await getUserProfile();
+            updateUserContext(profileData);
+            if (!profileData.displayName) {
+              setNeedsDisplayName(true);
+            }
+          } catch (profileError) {
+            console.error("Error fetching user profile:", profileError);
+          }
         }
       } else {
-        throw new Error("Login failed");
+        throw new Error("Login failed - invalid response");
       }
     } catch (error: unknown) {
       localStorage.removeItem("refreshToken");
@@ -114,23 +115,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("accessToken", response.accessToken);
         setIsAuthenticated(true);
 
-        // Extract user ID from token
-        try {
-          const decoded: any = jwtDecode(response.accessToken);
-          setUserId(decoded.sub || null);
-
-          // Fetch user profile after registration
-          getUserProfile()
-            .then((profile) => {
-              updateUserContext(profile);
-              setNeedsDisplayName(true); // New users will always need to set display name
-            })
-            .catch((error) => {
-              console.error("Error fetching user profile after registration:", error);
-            });
-        } catch (error) {
-          console.error("Error decoding token:", error);
+        // Set user data from response
+        if (response.user && response.user._id) {
+          setUserId(response.user._id);
+          updateUserContext(response.user);
+          setNeedsDisplayName(true); // New users always need to set a display name
         }
+      } else {
+        throw new Error("Registration failed - invalid response");
       }
     } catch (error: unknown) {
       throw new Error(error instanceof Error ? error.message : "Registration failed");

@@ -41,9 +41,8 @@ api.interceptors.response.use(
           throw new Error('No refresh token available');
         }
 
-        const { data } = await axios.post(`/api/auth/refresh`, {
-          refreshToken: refreshToken as string,  // Type assertion
-        });
+        // Now refreshToken is guaranteed to be a string
+        const { data } = await axios.post(`/api/auth/refresh`, { refreshToken });
 
         if (data?.data?.accessToken) {
           accessToken = data.data.accessToken;

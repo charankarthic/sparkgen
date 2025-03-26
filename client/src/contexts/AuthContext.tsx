@@ -2,7 +2,6 @@ import { createContext, useContext, useState, ReactNode, useEffect } from "react
 import { login as apiLogin, register as apiRegister } from "@/api/auth";
 import { jwtDecode } from "jwt-decode";
 import { getUserProfile, updateUserDisplayName } from "@/api/user";
-import { useToast } from "@/hooks/useToast";
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -19,7 +18,6 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return !!localStorage.getItem("accessToken");
   });
@@ -98,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         throw new Error("Login failed");
       }
-    } catch (error) {
+    } catch (error: unknown) {
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("accessToken");
       localStorage.removeItem("user");
@@ -134,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error("Error decoding token:", error);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       throw new Error(error instanceof Error ? error.message : "Registration failed");
     }
   };

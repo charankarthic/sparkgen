@@ -22,10 +22,10 @@ export function Achievements() {
 
         const leaderboardData = await getLeaderboard();
         setLeaderboard(leaderboardData);
-      } catch (error) {
+      } catch (error: unknown) {
         toast({
           title: "Error",
-          description: error.message || "Failed to load achievements data",
+          description: error instanceof Error ? error.message : "An error occurred",
           variant: "destructive",
         });
       } finally {

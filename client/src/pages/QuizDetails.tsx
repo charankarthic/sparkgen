@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { getQuizQuestions, submitQuiz } from "@/api/quiz";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/Card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { useToast } from "@/hooks/useToast";
 import { Trophy, Award, Check, X } from "lucide-react";
@@ -20,7 +20,7 @@ export function QuizDetails() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<{ questionId: string; answer: string }[]>([]);
   const [results, setResults] = useState<any>(null);
-  const [answeredQuestions, setAnsweredQuestions] = useState<any[]>([]); // Added for showing answers
+  const [answeredQuestions, setAnsweredQuestions] = useState<any[]>([]);
 
   // Add a ref to track if the request has been made
   const fetchInProgress = useRef(false);
@@ -80,7 +80,7 @@ export function QuizDetails() {
       console.error("Error fetching quiz:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to load quiz questions. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to load quiz questions. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -182,7 +182,7 @@ export function QuizDetails() {
       console.error("Error submitting quiz:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to submit quiz. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to submit quiz. Please try again.",
         variant: "destructive",
       });
     }
@@ -295,7 +295,7 @@ export function QuizDetails() {
                   setLoading(false);
                   toast({
                     title: "Error",
-                    description: "Failed to regenerate quiz questions. Please try again.",
+                    description: error instanceof Error ? error.message : "Failed to regenerate quiz questions. Please try again.",
                     variant: "destructive",
                   });
                 });

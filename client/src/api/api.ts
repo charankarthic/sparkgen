@@ -42,7 +42,7 @@ api.interceptors.response.use(
         }
 
         const { data } = await axios.post(`/api/auth/refresh`, {
-          refreshToken,
+          refreshToken: refreshToken || '',
         });
 
         if (data?.data?.accessToken) {

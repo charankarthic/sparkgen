@@ -1,12 +1,12 @@
 import api from './api';
 import { AxiosError } from 'axios';
 
-interface Achievement {
+export interface Achievement {
   title: string;
   description: string;
 }
 
-interface Stats {
+export interface Stats {
   quizzesCompleted: number;
   correctAnswers: number;
   totalAnswers: number;

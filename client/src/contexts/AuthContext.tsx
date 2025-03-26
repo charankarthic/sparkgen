@@ -2,6 +2,7 @@ import { createContext, useContext, useState, ReactNode, useEffect } from "react
 import { login as apiLogin, register as apiRegister } from "@/api/auth";
 import { jwtDecode } from "jwt-decode";
 import { getUserProfile, updateUserDisplayName } from "@/api/user";
+import { toast } from "@/components/ui/use-toast";
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -103,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsAuthenticated(false);
       setUserId(null);
       setUser(null);
-      throw new Error(error?.message || "Login failed");
+      throw new Error(error instanceof Error ? error.message : "Login failed");
     }
   };
 
@@ -118,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const decoded: any = jwtDecode(response.accessToken);
           setUserId(decoded.sub || null);
-          
+
           // Fetch user profile after registration
           getUserProfile()
             .then((profile) => {
@@ -133,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error) {
-      throw new Error(error?.message || "Registration failed");
+      throw new Error(error instanceof Error ? error.message : "Registration failed");
     }
   };
 
@@ -152,11 +153,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if (userId) {
         const response = await updateUserDisplayName(userId, displayName);
-        
+
         // Update the user in the context and local storage
         const updatedUser = { ...user, displayName: response.displayName };
         updateUserContext(updatedUser);
-        
+
         // No longer needs display name
         setNeedsDisplayName(false);
         console.log("Successfully updated display name to:", displayName);

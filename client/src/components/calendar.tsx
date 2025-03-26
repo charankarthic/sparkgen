@@ -1,12 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from 'date-fns';
-
-interface CalendarProps {
-  // Add any props needed here
-}
 
 export function Calendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -23,7 +19,7 @@ export function Calendar() {
 
   const addEvent = () => {
     if (!date) return;
-    
+
     const dateKey = format(date, 'yyyy-MM-dd');
     const newEvent = {
       title: `Event on ${format(date, 'PPP')}`,
@@ -43,7 +39,7 @@ export function Calendar() {
 
   const renderEvents = () => {
     if (!date) return null;
-    
+
     const dateKey = format(date, 'yyyy-MM-dd');
     const dateEvents = events[dateKey] || [];
 

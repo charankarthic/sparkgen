@@ -19,7 +19,6 @@ interface ProfileNameDialogProps {
 }
 
 export function ProfileNameDialog({
-  userId,
   open,
   onClose,
 }: ProfileNameDialogProps) {
@@ -52,7 +51,7 @@ export function ProfileNameDialog({
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to update profile name",
+        description: error instanceof Error ? error.message : "Failed to update profile name",
       });
     } finally {
       setLoading(false);

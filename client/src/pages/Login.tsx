@@ -41,7 +41,7 @@ export function Login() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error?.message,
+        description: error instanceof Error ? error.message : "Failed to log in",
       })
     } finally {
       setLoading(false)

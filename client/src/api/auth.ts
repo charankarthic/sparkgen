@@ -1,4 +1,5 @@
 import api from './api';
+import { AxiosError } from 'axios';
 
 // Description: Login user functionality
 // Endpoint: POST /api/auth/login
@@ -10,7 +11,13 @@ export const login = async (email: string, password: string) => {
     return response.data;
   } catch (error) {
     console.error('Login error:', error);
-    throw new Error(error?.response?.data?.message || error.message);
+    if (error instanceof AxiosError && error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    } else if (error instanceof Error) {
+      throw new Error(error.message);
+    } else {
+      throw new Error('Login failed');
+    }
   }
 };
 
@@ -23,7 +30,13 @@ export const register = async (email: string, password: string) => {
     const response = await api.post('/api/auth/register', {email, password});
     return response.data;
   } catch (error) {
-    throw new Error(error?.response?.data?.message || error.message);
+    if (error instanceof AxiosError && error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    } else if (error instanceof Error) {
+      throw new Error(error.message);
+    } else {
+      throw new Error('Registration failed');
+    }
   }
 };
 
@@ -35,6 +48,12 @@ export const logout = async () => {
   try {
     return await api.post('/api/auth/logout');
   } catch (error) {
-    throw new Error(error?.response?.data?.message || error.message);
+    if (error instanceof AxiosError && error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    } else if (error instanceof Error) {
+      throw new Error(error.message);
+    } else {
+      throw new Error('Logout failed');
+    }
   }
 };

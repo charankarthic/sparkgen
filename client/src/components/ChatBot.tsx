@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/useToast";
 import { useAuth } from "@/contexts/AuthContext";
 
 // Helper function to format message text
-const formatMessageText = (text) => {
+const formatMessageText = (text: string): string => {
   if (!text) return "";
 
   // Replace bold text (**text**) with styled spans
@@ -75,7 +75,7 @@ export function ChatBot() {
       console.error("Failed to send message:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to get response from AI assistant",
+        description: error instanceof Error ? error.message : "Failed to get response from AI assistant",
         variant: "destructive",
       });
       // Add a system message indicating the error

@@ -1,4 +1,16 @@
 import api from './api';
+import { AxiosError } from 'axios';
+
+interface Achievement {
+  title: string;
+  description: string;
+}
+
+interface Stats {
+  quizzesCompleted: number;
+  correctAnswers: number;
+  totalAnswers: number;
+}
 
 // Description: Get user profile
 // Endpoint: GET /api/user/profile
@@ -10,7 +22,13 @@ export const getUserProfile = async () => {
     return response.data;
   } catch (error) {
     console.error(error);
-    throw new Error(error?.response?.data?.error || error.message);
+    if (error instanceof AxiosError && error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    } else if (error instanceof Error) {
+      throw new Error(error.message);
+    } else {
+      throw new Error('Failed to fetch user profile');
+    }
   }
 };
 
@@ -24,7 +42,13 @@ export const getLeaderboard = async () => {
     return response.data;
   } catch (error) {
     console.error(error);
-    throw new Error(error?.response?.data?.error || error.message);
+    if (error instanceof AxiosError && error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    } else if (error instanceof Error) {
+      throw new Error(error.message);
+    } else {
+      throw new Error('Failed to fetch leaderboard');
+    }
   }
 };
 
@@ -38,7 +62,13 @@ export const updateUserXP = async (userId: string, xp: number) => {
     return response.data;
   } catch (error) {
     console.error(error);
-    throw new Error(error?.response?.data?.error || error.message);
+    if (error instanceof AxiosError && error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    } else if (error instanceof Error) {
+      throw new Error(error.message);
+    } else {
+      throw new Error('Failed to update user XP');
+    }
   }
 };
 
@@ -52,7 +82,13 @@ export const addUserAchievement = async (userId: string, achievement: { title: s
     return response.data;
   } catch (error) {
     console.error(error);
-    throw new Error(error?.response?.data?.error || error.message);
+    if (error instanceof AxiosError && error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    } else if (error instanceof Error) {
+      throw new Error(error.message);
+    } else {
+      throw new Error('Failed to add achievement');
+    }
   }
 };
 
@@ -66,7 +102,13 @@ export const updateUserDisplayName = async (userId: string, displayName: string)
     return response.data;
   } catch (error) {
     console.error(error);
-    throw new Error(error?.response?.data?.error || error.message);
+    if (error instanceof AxiosError && error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    } else if (error instanceof Error) {
+      throw new Error(error.message);
+    } else {
+      throw new Error('Failed to update display name');
+    }
   }
 };
 
@@ -80,6 +122,12 @@ export const deleteUserAccount = async (userId: string) => {
     return response.data;
   } catch (error) {
     console.error(error);
-    throw new Error(error?.response?.data?.error || error.message);
+    if (error instanceof AxiosError && error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    } else if (error instanceof Error) {
+      throw new Error(error.message);
+    } else {
+      throw new Error('Failed to delete account');
+    }
   }
 };

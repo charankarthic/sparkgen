@@ -1,4 +1,5 @@
 import api from './api';
+import { AxiosError } from 'axios';
 
 // Description: Send message to AI assistant
 // Endpoint: POST /api/chat
@@ -10,6 +11,12 @@ export const sendMessage = async (message: string) => {
     return response.data;
   } catch (error) {
     console.error(error);
-    throw new Error(error?.response?.data?.error || error.message);
+    if (error instanceof AxiosError && error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    } else if (error instanceof Error) {
+      throw new Error(error.message);
+    } else {
+      throw new Error('Failed to send message');
+    }
   }
 };

@@ -1,4 +1,5 @@
 import api from './api';
+import { AxiosError } from 'axios';
 
 // Description: Get list of available quizzes
 // Endpoint: GET /api/quiz/quizzes
@@ -10,7 +11,13 @@ export const getQuizzes = async () => {
     return response.data;
   } catch (error) {
     console.error(error);
-    throw new Error(error?.response?.data?.error || error.message);
+    if (error instanceof AxiosError && error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    } else if (error instanceof Error) {
+      throw new Error(error.message);
+    } else {
+      throw new Error('Failed to fetch quizzes');
+    }
   }
 };
 
@@ -27,7 +34,13 @@ export const getQuizQuestions = async (id: string, regenerate: boolean = false) 
     return response.data;
   } catch (error) {
     console.error(error);
-    throw new Error(error?.response?.data?.error || error.message);
+    if (error instanceof AxiosError && error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    } else if (error instanceof Error) {
+      throw new Error(error.message);
+    } else {
+      throw new Error('Failed to fetch quiz questions');
+    }
   }
 };
 
@@ -57,7 +70,13 @@ export const submitQuiz = async (data: { quizId: string, answers: Array<{ questi
     return response.data;
   } catch (error) {
     console.error(error);
-    throw new Error(error?.response?.data?.error || error.message);
+    if (error instanceof AxiosError && error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    } else if (error instanceof Error) {
+      throw new Error(error.message);
+    } else {
+      throw new Error('Failed to submit quiz');
+    }
   }
 };
 
@@ -76,7 +95,13 @@ export const generateQuizQuestions = async (data: {
     return response.data;
   } catch (error) {
     console.error(error);
-    throw new Error(error?.response?.data?.error || error.message);
+    if (error instanceof AxiosError && error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    } else if (error instanceof Error) {
+      throw new Error(error.message);
+    } else {
+      throw new Error('Failed to generate quiz questions');
+    }
   }
 };
 
@@ -95,6 +120,12 @@ export const createQuiz = async (data: {
     return response.data;
   } catch (error) {
     console.error(error);
-    throw new Error(error?.response?.data?.error || error.message);
+    if (error instanceof AxiosError && error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    } else if (error instanceof Error) {
+      throw new Error(error.message);
+    } else {
+      throw new Error('Failed to create quiz');
+    }
   }
 };

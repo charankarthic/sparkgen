@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosError } from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 const api = axios.create({
   headers: {
@@ -12,7 +12,7 @@ const api = axios.create({
 let accessToken: string | null = null;
 // Axios request interceptor: Attach access token to headers
 api.interceptors.request.use(
-  (config: AxiosRequestConfig): AxiosRequestConfig => {
+  (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
     if (!accessToken) {
       accessToken = localStorage.getItem('accessToken');
     }
@@ -28,26 +28,39 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response, // If the response is successful, return it
   async (error: AxiosError): Promise<any> => {
-    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     // If the error is due to an expired access token
-    if ([401, 403].includes(error.response?.status) && !originalRequest._retry) {
+    if (error.response?.status && [401, 403].includes(error.response.status) && !originalRequest._retry) {
       originalRequest._retry = true; // Mark the request as retried
 
       try {
         // Attempt to refresh the token
-        const { data } = await axios.post(`/api/auth/refresh`, {
-          refreshToken: localStorage.getItem('refreshToken'),
-        });
-        accessToken = data.data.accessToken;
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', data.data.refreshToken);
-
-        // Retry the original request with the new token
-        if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
         }
-        return api(originalRequest);
+
+        const { data } = await axios.post(`/api/auth/refresh`, {
+          refreshToken,
+        });
+
+        if (data?.data?.accessToken) {
+          accessToken = data.data.accessToken;
+          localStorage.setItem('accessToken', accessToken);
+
+          if (data.data.refreshToken) {
+            localStorage.setItem('refreshToken', data.data.refreshToken);
+          }
+
+          // Retry the original request with the new token
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+          }
+          return api(originalRequest);
+        } else {
+          throw new Error('Invalid token response');
+        }
       } catch (err) {
         // If refresh fails, clear tokens and redirect to login
         localStorage.removeItem('refreshToken');

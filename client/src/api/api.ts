@@ -53,7 +53,7 @@ api.interceptors.response.use(
         }
 
         // Now we're explicitly passing a string
-        const response = await postRefreshToken(refreshToken);
+        const response = await postRefreshToken(refreshToken!);
         const data = response.data;
 
         if (data?.data?.accessToken) {

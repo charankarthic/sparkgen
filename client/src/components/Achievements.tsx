@@ -25,7 +25,7 @@ export function Achievements() {
       } catch (error) {
         toast({
           title: "Error",
-          description: error.message || "Failed to load achievements data",
+          description: error instanceof Error ? error.message : "An error occurred",
           variant: "destructive",
         });
       } finally {

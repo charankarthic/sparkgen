@@ -18,7 +18,7 @@ export function DisplayNamePrompt() {
         toast({
           variant: "destructive",
           title: "Error",
-          description: error.message || "Failed to update profile name",
+          description: error instanceof Error ? error.message : "An error occurred",
         });
       }
     }

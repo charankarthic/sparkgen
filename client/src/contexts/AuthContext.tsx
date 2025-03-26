@@ -2,7 +2,7 @@ import { createContext, useContext, useState, ReactNode, useEffect } from "react
 import { login as apiLogin, register as apiRegister } from "@/api/auth";
 import { jwtDecode } from "jwt-decode";
 import { getUserProfile, updateUserDisplayName } from "@/api/user";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/useToast";
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -19,6 +19,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return !!localStorage.getItem("accessToken");
   });

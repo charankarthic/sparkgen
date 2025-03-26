@@ -41,7 +41,7 @@ export function Profile() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to load profile",
+        description: error instanceof Error ? error.message : "An error occurred",
       });
       setLoading(false);
     }
@@ -66,7 +66,7 @@ export function Profile() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to delete account",
+        description: error instanceof Error ? error.message : "An error occurred",
       });
     } finally {
       setIsDeleting(false);

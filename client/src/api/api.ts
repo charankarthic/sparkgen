@@ -10,6 +10,7 @@ const api = axios.create({
 });
 
 let accessToken: string | null = null;
+
 // Axios request interceptor: Attach access token to headers
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
@@ -34,20 +35,31 @@ api.interceptors.response.use(
     if (error.response?.status && [401, 403].includes(error.response.status) && !originalRequest._retry) {
       originalRequest._retry = true; // Mark the request as retried
 
+      // Get the refresh token
+      const refreshToken = localStorage.getItem('refreshToken');
+
+      // If no refresh token, we can't refresh the session
+      if (!refreshToken) {
+        localStorage.removeItem('accessToken');
+        accessToken = null;
+        window.location.href = '/login';
+        return Promise.reject(new Error('No refresh token available'));
+      }
+
       try {
-        // Get the refresh token
-        const refreshToken = localStorage.getItem('refreshToken');
-        
-        // If no refresh token, we can't refresh the session
-        if (!refreshToken) {
-          localStorage.removeItem('accessToken');
-          accessToken = null;
-          window.location.href = '/login';
-          return Promise.reject(new Error('No refresh token available'));
+        // Use a type-safe approach that avoids passing null
+        interface RefreshResponse {
+          data?: {
+            accessToken?: string;
+            refreshToken?: string;
+          }
         }
-        
-        // At this point TypeScript should know refreshToken is not null
-        const response = await axios.post('/api/auth/refresh', { refreshToken });
+
+        // Call the refresh endpoint with the token that we've verified is not null
+        const response = await axios.post<RefreshResponse>('/api/auth/refresh', {
+          refreshToken: refreshToken as string  // Type assertion here
+        });
+
         const data = response.data;
 
         if (data?.data?.accessToken) {

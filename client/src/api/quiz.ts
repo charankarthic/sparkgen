@@ -16,11 +16,14 @@ export const getQuizzes = async () => {
 
 // Description: Get quiz questions
 // Endpoint: GET /api/quiz/quiz/:id
-// Request: { id: string }
+// Request: { id: string, regenerate?: boolean }
 // Response: { questions: Array<{ id: string, question: string, options: string[], answer: string }> }
-export const getQuizQuestions = async (id: string) => {
+export const getQuizQuestions = async (id: string, regenerate: boolean = false) => {
   try {
-    const response = await api.get(`/api/quiz/quiz/${id}`);
+    const url = regenerate
+      ? `/api/quiz/quiz/${id}?regenerate=true`
+      : `/api/quiz/quiz/${id}`;
+    const response = await api.get(url);
     return response.data;
   } catch (error) {
     console.error(error);
@@ -31,7 +34,23 @@ export const getQuizQuestions = async (id: string) => {
 // Description: Submit quiz answers
 // Endpoint: POST /api/quiz/quiz/submit
 // Request: { quizId: string, answers: Array<{ questionId: string, answer: string }> }
-// Response: { score: number, correct: number, total: number }
+// Response: {
+//   score: number,
+//   correct: number,
+//   total: number,
+//   earnedXP: number,
+//   newLevel: number,
+//   leveledUp: boolean,
+//   achievements: Array<{ title: string, description: string }>,
+//   questionsWithAnswers: Array<{
+//     _id: string,
+//     question: string,
+//     options: string[],
+//     userAnswer: string,
+//     correctAnswer: string,
+//     isCorrect: boolean
+//   }>
+// }
 export const submitQuiz = async (data: { quizId: string, answers: Array<{ questionId: string, answer: string }> }) => {
   try {
     const response = await api.post('/api/quiz/quiz/submit', data);

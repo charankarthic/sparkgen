@@ -5,6 +5,7 @@ import { Input } from "./ui/input";
 import { Card } from "./ui/card";
 import { sendMessage } from "@/api/chat";
 import { useToast } from "@/hooks/useToast";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Helper function to format message text
 const formatMessageText = (text) => {
@@ -23,25 +24,31 @@ export function ChatBot() {
   const [messages, setMessages] = useState<Array<{ text: string; isUser: boolean }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Create a user-specific storage key
+  const storageKey = user ? `chatMessages_${user._id}` : null;
 
   // Load messages from local storage when component mounts
   useEffect(() => {
-    const savedMessages = localStorage.getItem('chatMessages');
-    if (savedMessages) {
-      try {
-        setMessages(JSON.parse(savedMessages));
-      } catch (error) {
-        console.error("Failed to parse saved messages:", error);
+    if (storageKey) {
+      const savedMessages = localStorage.getItem(storageKey);
+      if (savedMessages) {
+        try {
+          setMessages(JSON.parse(savedMessages));
+        } catch (error) {
+          console.error("Failed to parse saved messages:", error);
+        }
       }
     }
-  }, []);
+  }, [storageKey]);
 
   // Save messages to local storage when they change
   useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem('chatMessages', JSON.stringify(messages));
+    if (storageKey && messages.length > 0) {
+      localStorage.setItem(storageKey, JSON.stringify(messages));
     }
-  }, [messages]);
+  }, [messages, storageKey]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,13 +90,15 @@ export function ChatBot() {
 
   const clearChat = () => {
     setMessages([]);
-    localStorage.removeItem('chatMessages');
+    if (storageKey) {
+      localStorage.removeItem(storageKey);
+    }
   };
 
   return (
-    <div className="fixed bottom-16 right-4 z-50">
+    <div className="fixed bottom-4 right-4 z-50">
       {isOpen ? (
-        <Card className="w-80 h-96 flex flex-col bg-background/95 backdrop-blur-sm">
+        <Card className="w-[25vw] min-w-80 h-[70vh] flex flex-col bg-background/95 backdrop-blur-sm shadow-lg">
           <div className="flex items-center justify-between p-3 border-b">
             <h3 className="font-semibold">AI Assistant</h3>
             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
@@ -141,10 +150,10 @@ export function ChatBot() {
       ) : (
         <Button
           onClick={() => setIsOpen(true)}
-          className="rounded-full h-12 w-12"
+          className="rounded-full h-14 w-14 shadow-lg hover:scale-105 transition-transform"
           size="icon"
         >
-          <MessageCircle className="h-6 w-6" />
+          <MessageCircle className="h-7 w-7" />
         </Button>
       )}
     </div>

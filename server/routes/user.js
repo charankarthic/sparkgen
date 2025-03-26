@@ -215,4 +215,32 @@ router.put('/:userId/displayName', auth.requireUser, async (req, res) => {
   }
 });
 
+/**
+ * Delete user account
+ */
+router.delete('/:userId', auth.requireUser, async (req, res) => {
+  try {
+    console.log(`Deleting account for user ID: ${req.params.userId}`);
+
+    // Ensure the user can only delete their own account
+    if (req.user._id.toString() !== req.params.userId) {
+      console.error(`Unauthorized account deletion attempt: User ${req.user._id} tried to delete account for user ${req.params.userId}`);
+      return res.status(403).json({ error: 'Unauthorized to delete this account' });
+    }
+
+    const success = await userService.deleteAccount(req.params.userId);
+
+    if (!success) {
+      console.error(`Failed to delete account for user ${req.params.userId}`);
+      return res.status(500).json({ error: 'Failed to delete account' });
+    }
+
+    console.log(`Successfully deleted account for user ${req.params.userId}`);
+    res.json({ success: true, message: 'Account successfully deleted' });
+  } catch (error) {
+    console.error('Error deleting user account:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

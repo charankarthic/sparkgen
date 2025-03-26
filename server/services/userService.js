@@ -197,6 +197,22 @@ class UserService {
       throw new Error(`Database error while updating display name for user ${userId}: ${err}`);
     }
   }
+
+  /**
+   * Safely delete a user account
+   * @param {string} userId - User ID to delete
+   * @returns {Promise<boolean>} - Success status
+   */
+  static async deleteAccount(userId) {
+    try {
+      console.log(`Deleting account for user ${userId}`);
+      const result = await User.findByIdAndDelete(userId);
+      return !!result; // Convert to boolean (true if deletion was successful)
+    } catch (err) {
+      console.error(`Error deleting account for user ${userId}:`, err);
+      throw new Error(`Database error while deleting account for user ${userId}: ${err}`);
+    }
+  }
 }
 
 module.exports = UserService;

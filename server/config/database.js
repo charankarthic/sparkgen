@@ -1,17 +1,19 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+require("dotenv").config({ path: "./server/.env" }); // Ensure correct .env path
 
 const connectDB = async () => {
   try {
-    console.log('Connecting to MongoDB:', process.env.DATABASE_URL);
-    const conn = await mongoose.connect(process.env.DATABASE_URL, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    if (!process.env.DATABASE_URL) {
+      throw new Error("❌ DATABASE_URL is missing in .env file!");
+    }
 
-    console.log(`MongoDB Connected: ${conn.connection.host} to database: ${conn.connection.name}`);
-    return conn;
+    console.log("🔄 Connecting to MongoDB Atlas...");
+
+    const conn = await mongoose.connect(process.env.DATABASE_URL);
+
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}, Database: ${conn.connection.name}`);
   } catch (error) {
-    console.error(`Error connecting to MongoDB: ${error.message}`);
+    console.error(`❌ MongoDB Connection Error: ${error.message}`);
     process.exit(1);
   }
 };

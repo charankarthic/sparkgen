@@ -69,3 +69,17 @@ export const updateUserDisplayName = async (userId: string, displayName: string)
     throw new Error(error?.response?.data?.error || error.message);
   }
 };
+
+// Description: Delete user account
+// Endpoint: DELETE /api/user/:userId
+// Request: {}
+// Response: { success: boolean, message: string }
+export const deleteUserAccount = async (userId: string) => {
+  try {
+    const response = await api.delete(`/api/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw new Error(error?.response?.data?.error || error.message);
+  }
+};

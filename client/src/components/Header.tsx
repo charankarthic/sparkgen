@@ -3,6 +3,7 @@ import { Button } from "./ui/button"
 import { ThemeToggle } from "./ui/theme-toggle"
 import { useAuth } from "@/contexts/AuthContext"
 import { useNavigate } from "react-router-dom"
+import { SparkgenIcon } from "./SparkgenIcon"
 
 export function Header() {
   const { logout } = useAuth()
@@ -14,8 +15,9 @@ export function Header() {
   return (
     <header className="fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-16 items-center justify-between px-6">
-        <div className="flex items-center gap-4">
-          <div className="text-xl font-bold cursor-pointer" onClick={() => navigate("/")}>Sparkgen</div>
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
+          <SparkgenIcon className="h-6 w-6 text-primary" />
+          <div className="text-xl font-bold">Sparkgen</div>
         </div>
         <div className="flex items-center gap-4">
           <ThemeToggle />

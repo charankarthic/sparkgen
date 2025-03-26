@@ -4,6 +4,8 @@ const auth = require('../routes/middleware/auth');
 const quizService = require('../services/quizService');
 const userService = require('../services/userService');
 const { calculateLevel } = require('../utils/gameUtils');
+const Quiz = require('../models/Quiz');
+const User = require('../models/User');
 
 // Get all quizzes
 router.get('/quizzes', async (req, res) => {
@@ -19,7 +21,20 @@ router.get('/quizzes', async (req, res) => {
 // Get a specific quiz by ID
 router.get('/quiz/:id', auth.requireUser, async (req, res) => {
   try {
-    const quiz = await quizService.getQuizById(req.params.id);
+    // Add more detailed logging
+    console.log(`Quiz request - ID: ${req.params.id}, User ID: ${req.user._id}`);
+    console.log(`User object: ${JSON.stringify(req.user)}`);
+
+    // Check if we should force regenerate questions
+    const forceRegenerate = req.query.regenerate === 'true';
+    console.log(`Force regenerate parameter: ${forceRegenerate}`);
+
+    // Pass user data including level to the service
+    const userData = req.user ? { level: req.user.level || 1 } : undefined;
+    console.log(`Passing user data to service: ${JSON.stringify(userData)}`);
+    console.log(`Fetching quiz with user level: ${userData?.level || 'not available'}`);
+
+    const quiz = await quizService.getQuizById(req.params.id, userData, forceRegenerate);
     if (!quiz) {
       return res.status(404).json({ error: 'Quiz not found' });
     }
@@ -45,117 +60,104 @@ router.get('/quiz/:id', auth.requireUser, async (req, res) => {
 router.post('/quiz/submit', auth.requireUser, async (req, res) => {
   try {
     const { quizId, answers } = req.body;
-    const userId = req.user._id;
 
     if (!quizId || !answers || !Array.isArray(answers)) {
-      return res.status(400).json({ error: 'Invalid request body' });
+      return res.status(400).json({ error: 'Invalid submission format' });
     }
 
-    const quiz = await quizService.getQuizById(quizId);
+    // Get the quiz with questions
+    const quiz = await Quiz.findById(quizId);
     if (!quiz) {
       return res.status(404).json({ error: 'Quiz not found' });
     }
 
-    // Check if all questions are answered
-    if (answers.length < quiz.questions.length) {
-      return res.status(400).json({
-        error: 'Please answer all questions before submitting the quiz'
-      });
-    }
+    console.log(`Processing quiz submission for quiz ID: ${quizId} by user ID: ${req.user._id}`);
 
     // Calculate score
     let correct = 0;
-    const total = answers.length;
+    const questionsWithAnswers = [];
 
-    answers.forEach(answer => {
-      const question = quiz.questions.find(q => q._id.toString() === answer.questionId);
-      if (question && question.answer === answer.answer) {
+    // Map through questions to find the corresponding answer
+    quiz.questions.forEach(question => {
+      const userAnswer = answers.find(a => a.questionId === question._id.toString());
+      const isCorrect = userAnswer && userAnswer.answer === question.answer;
+
+      if (isCorrect) {
         correct++;
       }
+
+      // Add to the questions with answers array
+      questionsWithAnswers.push({
+        _id: question._id,
+        question: question.question,
+        options: question.options,
+        userAnswer: userAnswer ? userAnswer.answer : null,
+        correctAnswer: question.answer,
+        isCorrect: isCorrect
+      });
     });
 
-    const score = total > 0 ? Math.round((correct / total) * 100) : 0;
+    const total = quiz.questions.length;
+    const score = Math.round((correct / total) * 100);
 
-    // Award XP for correct answers (10 XP per correct answer)
-    if (correct > 0) {
-      // Get current user
-      const user = await userService.get(userId);
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+    // Get user to update stats
+    const user = await User.findById(req.user._id);
+
+    // Update user stats
+    user.stats.quizzesCompleted += 1;
+
+    // Calculate new average score
+    const currentTotalScore = user.stats.averageScore * (user.stats.quizzesCompleted - 1);
+    user.stats.averageScore = (currentTotalScore + score) / user.stats.quizzesCompleted;
+
+    // Calculate XP earned (10 points per correct answer)
+    const earnedXP = correct * 10;
+    user.xp += earnedXP;
+    user.stats.totalXP += earnedXP;
+
+    // Calculate level based on XP
+    const previousLevel = user.level;
+    user.level = Math.floor(Math.log(user.xp / 100 + 1) / Math.log(1.5)) + 1;
+
+    // Check if user leveled up
+    const leveledUp = user.level > previousLevel;
+
+    // Check for achievements
+    let achievements = [];
+
+    // Perfect score achievement
+    if (score === 100) {
+      const perfectScoreAchievement = {
+        title: 'Perfect Score',
+        description: `Scored 100% on ${quiz.title} quiz`,
+        date: new Date()
+      };
+
+      // Check if the user already has this achievement
+      const hasAchievement = user.achievements.some(
+        a => a.title === perfectScoreAchievement.title && a.description === perfectScoreAchievement.description
+      );
+
+      if (!hasAchievement) {
+        user.achievements.push(perfectScoreAchievement);
+        achievements.push(perfectScoreAchievement);
       }
-
-      // Calculate new XP and level
-      const earnedXP = correct * 10; // 10 XP per correct answer
-      const newXP = user.xp + earnedXP;
-      const newLevel = calculateLevel(newXP);
-
-      // Update user XP and level
-      await userService.updateXpAndLevel(userId, newXP, newLevel);
-
-      // Update user stats
-      await userService.update(userId, {
-        $inc: {
-          'stats.quizzesCompleted': 1,
-        },
-        $set: {
-          'stats.averageScore': user.stats.averageScore
-            ? Math.round((user.stats.averageScore * user.stats.quizzesCompleted + score) / (user.stats.quizzesCompleted + 1))
-            : score
-        }
-      });
-
-      // Award achievements if applicable
-      const achievements = [];
-
-      // First quiz completed achievement
-      if (user.stats.quizzesCompleted === 0) {
-        const achievement = {
-          title: 'First Quiz Completed',
-          description: 'You completed your first quiz!'
-        };
-        await userService.addAchievement(userId, achievement);
-        achievements.push(achievement);
-      }
-
-      // Perfect score achievement
-      if (score === 100) {
-        const achievement = {
-          title: 'Perfect Score',
-          description: 'You got a perfect score on a quiz!'
-        };
-        await userService.addAchievement(userId, achievement);
-        achievements.push(achievement);
-      }
-
-      // Level up achievement
-      if (newLevel > user.level) {
-        const achievement = {
-          title: 'Level Up',
-          description: `You reached level ${newLevel}!`
-        };
-        await userService.addAchievement(userId, achievement);
-        achievements.push(achievement);
-      }
-
-      res.json({
-        score,
-        correct,
-        total,
-        earnedXP,
-        newXP,
-        newLevel,
-        achievements
-      });
-    } else {
-      // No correct answers
-      res.json({
-        score,
-        correct,
-        total,
-        earnedXP: 0,
-        achievements: []
-      });
     }
+
+    await user.save();
+
+    res.json({
+      score,
+      correct,
+      total,
+      earnedXP,
+      newLevel: user.level,
+      leveledUp,
+      achievements,
+      questionsWithAnswers // Include the questions with answers in the response
+    });
+
+    console.log(`Quiz submission processed. Score: ${score}%, XP earned: ${earnedXP}`);
   } catch (error) {
     console.error('Error submitting quiz:', error);
     res.status(500).json({ error: error.message });

@@ -17,10 +17,30 @@ const QUIZ_ICONS = {
 export function Games() {
   const [quizzes, setQuizzes] = useState<any[]>([]);
   const navigate = useNavigate();
+  // Track which quizzes have been played
+  const [playedQuizzes, setPlayedQuizzes] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     getQuizzes().then(setQuizzes);
+
+    // Load played quizzes from localStorage
+    const storedPlayedQuizzes = localStorage.getItem('playedQuizzes');
+    if (storedPlayedQuizzes) {
+      setPlayedQuizzes(new Set(JSON.parse(storedPlayedQuizzes)));
+    }
   }, []);
+
+  const handleStartGame = (quizId: string) => {
+    // Check if this quiz has been played before
+    const hasBeenPlayed = playedQuizzes.has(quizId);
+
+    // If quiz has been played, include regenerate=true parameter
+    if (hasBeenPlayed) {
+      navigate(`/games/${quizId}?regenerate=true`);
+    } else {
+      navigate(`/games/${quizId}`);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -28,6 +48,8 @@ export function Games() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {quizzes.map((quiz) => {
           const Icon = QUIZ_ICONS[quiz.type as keyof typeof QUIZ_ICONS] || Book;
+          const hasBeenPlayed = playedQuizzes.has(quiz._id);
+
           return (
             <Card key={quiz._id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
@@ -42,9 +64,9 @@ export function Games() {
                 <p className="text-muted-foreground mb-4">{quiz.description}</p>
                 <Button
                   className="w-full"
-                  onClick={() => navigate(`/games/${quiz._id}`)}
+                  onClick={() => handleStartGame(quiz._id)}
                 >
-                  Start Game
+                  {hasBeenPlayed ? "Play Again" : "Start Game"}
                 </Button>
               </CardContent>
             </Card>

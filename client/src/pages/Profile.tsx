@@ -1,16 +1,31 @@
 import { useEffect, useState } from "react";
-import { User, Trophy, Star, BarChart } from "lucide-react";
+import { User, Trophy, Star, BarChart, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { getUserProfile } from "@/api/user";
+import { Button } from "@/components/Button";
+import { getUserProfile, deleteUserAccount } from "@/api/user";
 import { useToast } from "@/hooks/useToast";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function Profile() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
-  const { setNeedsDisplayName } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchProfile();
@@ -32,13 +47,80 @@ export function Profile() {
     }
   };
 
-  const handleProfileNameUpdate = (newName: string) => {
-    if (profile) {
-      setProfile({
-        ...profile,
-        displayName: newName
+  const handleDeleteAccount = async () => {
+    if (!user?._id) return;
+
+    try {
+      setIsDeleting(true);
+      await deleteUserAccount(user._id);
+
+      toast({
+        title: "Account deleted",
+        description: "Your account has been successfully deleted.",
+      });
+
+      // Log the user out and redirect to home page
+      logout();
+      navigate("/");
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to delete account",
+      });
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  // Calculate level progress
+  const calculateLevelProgress = () => {
+    if (!profile) return 0;
+
+    // Simplified calculation - in a real app you might want to use the same formula as the backend
+    const currentLevelXp = Math.pow(profile.level - 1, 2) * 100;
+    const nextLevelXp = Math.pow(profile.level, 2) * 100;
+    const xpRange = nextLevelXp - currentLevelXp;
+    const userXpInLevel = profile.xp - currentLevelXp;
+
+    return Math.min(Math.round((userXpInLevel / xpRange) * 100), 100);
+  };
+
+  // Get appropriate achievements based on level and progress
+  const getRelevantAchievements = () => {
+    if (!profile) return [];
+
+    const achievements = [...profile.achievements || []];
+
+    // Check if we need to add or update level achievements
+    const levelAchievementIndex = achievements.findIndex(
+      a => a.title.includes("Reached Level")
+    );
+
+    // If there's a level achievement, make sure it's up to date
+    if (levelAchievementIndex !== -1) {
+      // Update the existing level achievement to match current level
+      achievements[levelAchievementIndex] = {
+        ...achievements[levelAchievementIndex],
+        title: `Reached Level ${profile.level}`,
+        description: `Congratulations on reaching level ${profile.level}!`,
+        date: new Date() // Update date to ensure it appears at the top when sorted
+      };
+    } else if (profile.level > 1) {
+      // Add a new level achievement if one doesn't exist
+      achievements.push({
+        _id: `level-${profile.level}-${Date.now()}`, // Generate a temporary ID
+        title: `Reached Level ${profile.level}`,
+        description: `Congratulations on reaching level ${profile.level}!`,
+        date: new Date()
       });
     }
+
+    // Sort achievements by date, newest first
+    return achievements.sort((a, b) =>
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
   };
 
   return (
@@ -100,9 +182,11 @@ export function Profile() {
               <div>
                 <div className="flex justify-between mb-2">
                   <span className="text-sm font-medium">Current Level Progress</span>
-                  <span className="text-sm text-muted-foreground">65%</span>
+                  <span className="text-sm text-muted-foreground">
+                    {calculateLevelProgress()}%
+                  </span>
                 </div>
-                <Progress value={65} />
+                <Progress value={calculateLevelProgress()} />
               </div>
               <div>
                 <div className="flex justify-between mb-2">
@@ -123,8 +207,12 @@ export function Profile() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {profile?.achievements?.length > 0 ? (
-                profile.achievements.slice(0, 3).map((achievement: any) => (
+              {loading ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : getRelevantAchievements().length > 0 ? (
+                getRelevantAchievements().slice(0, 3).map((achievement) => (
                   <div
                     key={achievement._id}
                     className="flex items-center gap-4 p-3 bg-muted rounded-lg"
@@ -134,6 +222,9 @@ export function Profile() {
                       <h4 className="font-semibold">{achievement.title}</h4>
                       <p className="text-sm text-muted-foreground">
                         {achievement.description}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(achievement.date).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -147,6 +238,54 @@ export function Profile() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Account Section */}
+      <Card className="border-destructive/20">
+        <CardHeader>
+          <CardTitle className="text-destructive flex items-center gap-2">
+            <Trash2 className="h-5 w-5" />
+            Delete Account
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-4 text-muted-foreground">
+            Permanently delete your account and all your data. This action cannot be undone.
+          </p>
+          <Button
+            variant="destructive"
+            onClick={() => setIsDeleteDialogOpen(true)}
+            disabled={loading || isDeleting}
+          >
+            Delete Account
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Delete Account Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your
+              account and remove all your data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteAccount();
+              }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete Account"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

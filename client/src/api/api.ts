@@ -35,14 +35,26 @@ api.interceptors.response.use(
       originalRequest._retry = true; // Mark the request as retried
 
       try {
-        // Attempt to refresh the token
+        // Get the refresh token
+        // We'll explicitly handle the type narrowing here
         const refreshToken = localStorage.getItem('refreshToken');
+
+        // If no refresh token, we can't refresh the session
         if (!refreshToken) {
+          localStorage.removeItem('accessToken');
+          accessToken = null;
+          window.location.href = '/login';
           throw new Error('No refresh token available');
         }
 
-        // Now refreshToken is guaranteed to be a string
-        const { data } = await axios.post(`/api/auth/refresh`, { refreshToken });
+        // Create a function that explicitly ensures a string is passed
+        function postRefreshToken(token: string) {
+          return axios.post(`/api/auth/refresh`, { refreshToken: token });
+        }
+
+        // Now we're explicitly passing a string
+        const response = await postRefreshToken(refreshToken);
+        const data = response.data;
 
         if (data?.data?.accessToken) {
           accessToken = data.data.accessToken;

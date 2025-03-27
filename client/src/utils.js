@@ -5,6 +5,13 @@
 // Check if we're in production environment
 const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 
+// Add environment detection logs
+console.log('Environment detection:', {
+  hostname: window.location.hostname,
+  isProduction: isProduction,
+  viteEnv: typeof import.meta.env !== 'undefined' ? import.meta.env.MODE : 'undefined'
+});
+
 // Buffer to collect logs before sending them to the server
 let logBuffer = [];
 const MAX_BUFFER_SIZE = 50;
@@ -45,13 +52,17 @@ const formatLogEntry = (level, args) => {
  * This is only used in development mode
  */
 const sendLogs = async () => {
+  console.log('sendLogs called, isProduction:', isProduction, 'buffer size:', logBuffer.length);
+
   // Immediately return without doing anything in production
   if (isProduction) {
+    console.log('Production detected, skipping log sending');
     return;
   }
 
   // Only continue if buffer is not empty
   if (logBuffer.length === 0) {
+    console.log('Log buffer empty, skipping');
     return;
   }
 
@@ -78,6 +89,12 @@ let logSendInterval = null;
 if (!isProduction) {
   logSendInterval = setInterval(sendLogs, LOG_SEND_INTERVAL);
 }
+
+// Log interval setup status
+console.log('Log sending interval setup:', {
+  isIntervalSet: logSendInterval !== null,
+  isProduction: isProduction
+});
 
 // Override console methods to capture logs in development only
 const originalConsole = {};

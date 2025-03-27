@@ -64,6 +64,7 @@ export function Register() {
                 id="email"
                 type="email"
                 placeholder="Enter your email"
+                autoComplete="email"
                 {...register("email", { required: true })}
               />
             </div>
@@ -73,6 +74,7 @@ export function Register() {
                 id="password"
                 type="password"
                 placeholder="Choose a password"
+                autoComplete="new-password"
                 {...register("password", { required: true })}
               />
             </div>

@@ -3,7 +3,7 @@
  */
 
 // Check if we're in production environment
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 
 // Buffer to collect logs before sending them to the server
 let logBuffer = [];
@@ -18,7 +18,7 @@ const LOG_SEND_INTERVAL = 5000; // 5 seconds
  */
 const formatLogEntry = (level, args) => {
   const timestamp = new Date().toISOString();
-  
+
   // Handle various types of log arguments and convert to strings
   const formattedArgs = args.map(arg => {
     if (typeof arg === 'object' && arg !== null) {
@@ -47,10 +47,10 @@ const formatLogEntry = (level, args) => {
 const sendLogs = async () => {
   // Skip sending logs if buffer is empty or we're in production
   if (logBuffer.length === 0 || isProduction) return;
-  
+
   const logsToSend = [...logBuffer];
   logBuffer = [];
-  
+
   try {
     // Only attempt to send logs in development mode
     if (!isProduction) {
@@ -59,7 +59,7 @@ const sendLogs = async () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ logs: logsToSend })
       });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to send logs: HTTP ${response.status}`);
       }
@@ -83,15 +83,15 @@ const consoleMethods = ['log', 'info', 'warn', 'error', 'debug'];
 
 consoleMethods.forEach(method => {
   originalConsole[method] = console[method];
-  
+
   console[method] = (...args) => {
     // Call the original console method
     originalConsole[method](...args);
-    
+
     // In development, capture logs for the logging server
     if (!isProduction) {
       logBuffer.push(formatLogEntry(method, args));
-      
+
       // If buffer gets too large, send logs immediately
       if (logBuffer.length >= MAX_BUFFER_SIZE) {
         sendLogs();
@@ -104,7 +104,7 @@ consoleMethods.forEach(method => {
 window.addEventListener('beforeunload', () => {
   if (!isProduction && logBuffer.length > 0) {
     // Use sync method to send logs on page unload
-    navigator.sendBeacon('http://localhost:4444/logs', 
+    navigator.sendBeacon('http://localhost:4444/logs',
       JSON.stringify({ logs: logBuffer })
     );
   }

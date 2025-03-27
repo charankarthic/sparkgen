@@ -48,33 +48,50 @@ const sendLogs = async () => {
   // Skip sending logs if buffer is empty or we're in production
   if (logBuffer.length === 0 || isProduction) return;
 
+  // Double check we're definitely in development mode before proceeding
+  if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    // Clear buffer and don't attempt to send logs in production
+    logBuffer = [];
+    return;
+  }
+
   const logsToSend = [...logBuffer];
   logBuffer = [];
 
   try {
-    // Only attempt to send logs in development mode
-    if (!isProduction) {
-      const response = await fetch('http://localhost:4444/logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ logs: logsToSend })
-      });
+    // Only attempt to send logs in development mode and if the server is likely running
+    const response = await fetch('http://localhost:4444/logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ logs: logsToSend })
+    });
 
-      if (!response.ok) {
-        throw new Error(`Failed to send logs: HTTP ${response.status}`);
-      }
+    if (!response.ok) {
+      throw new Error(`Failed to send logs: HTTP ${response.status}`);
     }
   } catch (error) {
-    // In development, log the error but don't re-buffer the logs to avoid infinite loops
-    if (!isProduction) {
-      console.error('Failed to send logs:', error);
+    // Don't re-add logs to buffer to avoid infinite loops
+    console.error('Failed to send logs:', error);
+    
+    // If we get connection refused errors repeatedly, we might want to disable logging
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      console.warn('Development logging server appears to be offline. Log sending will be paused.');
     }
   }
 };
 
-// Set up interval to send logs periodically in development
+// Set up interval to send logs periodically in development mode only
+let logSendInterval = null;
 if (!isProduction) {
-  setInterval(sendLogs, LOG_SEND_INTERVAL);
+  logSendInterval = setInterval(sendLogs, LOG_SEND_INTERVAL);
+  
+  // If we're really sure we're in development, add a check after 30 seconds
+  // to see if connection failures are consistent and disable if needed
+  setTimeout(() => {
+    if (logSendInterval && !isProduction && window.location.hostname === 'localhost') {
+      console.log('Development logging is active');
+    }
+  }, 5000);
 }
 
 // Override console methods to capture logs
@@ -102,11 +119,16 @@ consoleMethods.forEach(method => {
 
 // Handle page unload: try to send any remaining logs
 window.addEventListener('beforeunload', () => {
-  if (!isProduction && logBuffer.length > 0) {
-    // Use sync method to send logs on page unload
-    navigator.sendBeacon('http://localhost:4444/logs',
-      JSON.stringify({ logs: logBuffer })
-    );
+  // Triple-check we're in development mode to prevent any attempts in production
+  if (!isProduction && logBuffer.length > 0 && 
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    try {
+      navigator.sendBeacon('http://localhost:4444/logs',
+        JSON.stringify({ logs: logBuffer })
+      );
+    } catch (error) {
+      // We can't do much on unload, but at least we tried
+    }
   }
 });
 

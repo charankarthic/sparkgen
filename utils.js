@@ -1,39 +1,47 @@
 // utils.js - Utility functions for the SparkGen application
 
+// Buffer to collect logs before sending
+let logBuffer = [];
+
+/**
+ * Environment detection helper
+ * Checks various environment variables and conditions to determine if we're in production
+ */
+const isProduction = typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'production' ||
+                    typeof import !== 'undefined' && import.meta && import.meta.env && import.meta.env.PROD ||
+                    typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname);
+
 /**
  * Sending logs to the development server
  * This only works in development environment
- * @param {Object} logData - Data to be logged
  * @returns {Promise} - Promise resolving when logs are sent
  */
-const sendLogs = async (logData) => {
+const sendLogs = async () => {
+  // Skip completely in production - no logging attempted
+  if (isProduction) {
+    return;
+  }
+
+  // Only continue if buffer is not empty
+  if (logBuffer.length === 0) {
+    return;
+  }
+
+  const logsToSend = [...logBuffer];
+  logBuffer = [];
+
   try {
-    // Only attempt to send logs in development environment
-    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
-      const response = await fetch('http://localhost:4444/logs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          timestamp: new Date().toISOString(),
-          ...logData,
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to send logs: ${response.statusText}`);
-      }
-      
-      return await response.json();
+    const response = await fetch('http://localhost:4444/logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ logs: logsToSend })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to send logs: HTTP ${response.status}`);
     }
-    // In production, silently skip logging to external server
-    return Promise.resolve();
   } catch (error) {
-    // Log the error but don't throw to prevent app disruption
-    console.error('Failed to send logs:', error);
-    // Return a resolved promise to prevent chain breaking
-    return Promise.resolve();
+    console.error('Development logging server unreachable');
   }
 };
 
@@ -42,40 +50,47 @@ const sendLogs = async (logData) => {
  */
 const setupConsoleInterceptor = () => {
   if (typeof window === 'undefined') return; // Only run in browser
-  
+  if (isProduction) return; // Skip in production
+
   const originalConsoleMethods = {
     log: console.log,
     error: console.error,
     warn: console.warn,
     info: console.info,
   };
-  
+
   const consoleMethods = Object.keys(originalConsoleMethods);
-  
+
   consoleMethods.forEach((method) => {
     console[method] = (...args) => {
       // Call the original method
       originalConsoleMethods[method](...args);
+
+      // Don't send logs in production
+      if (isProduction) return;
       
-      // Only send logs in development
-      if (process.env.NODE_ENV !== 'production') {
-        // Send logs to development server
-        sendLogs({
+      // Add to buffer
+      try {
+        const logEntry = {
+          timestamp: new Date().toISOString(),
           level: method,
           message: args.map(arg => {
-            try {
-              if (typeof arg === 'object') {
-                return JSON.stringify(arg);
-              }
-              return String(arg);
-            } catch (e) {
-              return 'Unable to stringify log argument';
+            if (typeof arg === 'object') {
+              return JSON.stringify(arg);
             }
-          }).join(' '),
-        }).catch(error => {
-          // Just log the error, don't interrupt the application flow
-          originalConsoleMethods.error('Failed to send logs:', error);
+            return String(arg);
+          }).join(' ')
+        };
+        
+        logBuffer.push(logEntry);
+        
+        // Attempt to send logs (will only send if buffer has items)
+        sendLogs().catch(error => {
+          // Silently fail - we don't want to cause console loops
         });
+      } catch (e) {
+        // Just log the error to original console, don't disrupt app
+        originalConsoleMethods.error('Error in console interceptor:', e);
       }
     };
   });
@@ -88,7 +103,7 @@ const setupConsoleInterceptor = () => {
  */
 const formatDate = (date) => {
   if (!date) return 'N/A';
-  
+
   try {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
     return dateObj.toLocaleDateString(undefined, {
@@ -120,7 +135,7 @@ const truncateText = (text, maxLength = 100) => {
  */
 const initUtils = () => {
   // Only setup console interceptor in development environment
-  if (process.env.NODE_ENV !== 'production') {
+  if (!isProduction) {
     setupConsoleInterceptor();
   }
 };

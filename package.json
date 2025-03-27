@@ -5,11 +5,11 @@
   "main": "server/server.js",
   "scripts": {
     "start": "cross-env NODE_ENV=production node server/server.js",
+    "render-postbuild": "cd client && npm install && npm run build",
     "server": "cd server && npm run dev",
     "client": "cd client && npm run dev",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "cd client && npm run build",
-    "render-postbuild": "cd client && npm ci && npm run build && cd ../server && npm ci",
     "postinstall": "concurrently -n \"client,server\" \"npm run client-install\" \"npm run server-install\"",
     "test": "echo \"Error: no test specified\" && exit 1",
     "client-install": "cd client && npm install",
@@ -34,13 +34,11 @@
   "license": "ISC",
   "dependencies": {
     "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.4.7",
     "nodemon": "^3.1.9"
   },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "devDependencies": {
-    "cross-env": "^7.0.3"
   }
 }

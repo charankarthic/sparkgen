@@ -16,11 +16,13 @@
     "build": "cd client && npm install && npm run build",
     "install-deps": "npm install && cd client && npm install && cd ../server && npm install",
     "install-all": "npm install && cd client && npm install && cd ../server && npm install",
-    "render-postbuild": "npm install && cd client && npm install && npm run build && cd ../server && npm install",
     "install-client": "cd client && npm install",
+    "install-server": "cd server && npm install",
     "build-client": "cd client && npm run build",
     "seed": "cd server && npm run seed",
-    "install": "cd server && npm install && cd ../client && npm install"
+    "render-postbuild": "npm run install-client && npm run build-client",
+    "render-start": "npm run start",
+    "heroku-postbuild": "npm run install-client && npm run build-client"
   },
   "keywords": [
     "ai",
@@ -31,10 +33,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "concurrently": "^9.1.2",
-    "cross-env": "^7.0.3"
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.7",
+    "nodemon": "^3.1.9"
   },
-  "devDependencies": {},
   "engines": {
     "node": ">=18.0.0"
   }

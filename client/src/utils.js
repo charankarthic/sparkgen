@@ -3,7 +3,8 @@
  */
 
 // Check if we're in production environment
-const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+const isProduction = process.env.NODE_ENV === 'production' ||
+                    !['localhost', '127.0.0.1'].includes(window.location.hostname);
 
 // Add environment detection logs
 console.log('Environment detection:', {
@@ -52,11 +53,8 @@ const formatLogEntry = (level, args) => {
  * This is only used in development mode
  */
 const sendLogs = async () => {
-  console.log('sendLogs called, isProduction:', isProduction, 'buffer size:', logBuffer.length);
-
-  // Immediately return without doing anything in production
+  // Skip completely in production - no logging attempted
   if (isProduction) {
-    console.log('Production detected, skipping log sending');
     return;
   }
 
@@ -107,7 +105,7 @@ consoleMethods.forEach(method => {
     // Call the original console method
     originalConsole[method](...args);
 
-    // In development, capture logs for the logging server
+    // Only add to log buffer in development
     if (!isProduction) {
       logBuffer.push(formatLogEntry(method, args));
 

@@ -4,6 +4,7 @@
 
 // Check if we're in production environment
 const isProduction = process.env.NODE_ENV === 'production' ||
+                    import.meta.env.PROD ||
                     !['localhost', '127.0.0.1'].includes(window.location.hostname);
 
 // Add environment detection logs
@@ -60,7 +61,6 @@ const sendLogs = async () => {
 
   // Only continue if buffer is not empty
   if (logBuffer.length === 0) {
-    console.log('Log buffer empty, skipping');
     return;
   }
 

@@ -16,7 +16,7 @@
     "build": "cd client && npm run build",
     "install-deps": "npm install && cd client && npm install && cd ../server && npm install",
     "install-all": "npm install && cd client && npm install && cd ../server && npm install",
-    "render-postbuild": "cd client && npm install && npm run build && cd ../server && npm install",
+    "render-postbuild": "npm install && cd client && npm install && npm run build && cd ../server && npm install",
     "install-client": "cd client && npm install",
     "build-client": "cd client && npm run build",
     "seed": "cd server && npm run seed"

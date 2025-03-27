@@ -46,7 +46,13 @@ const formatLogEntry = (level, args) => {
  */
 const sendLogs = async () => {
   // Skip sending logs if buffer is empty or we're in production
-  if (logBuffer.length === 0 || isProduction) return;
+  if (logBuffer.length === 0 || isProduction) {
+    // Clear buffer in production to prevent memory buildup
+    if (isProduction) {
+      logBuffer = [];
+    }
+    return;
+  }
 
   // Double check we're definitely in development mode before proceeding
   if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
@@ -71,11 +77,16 @@ const sendLogs = async () => {
     }
   } catch (error) {
     // Don't re-add logs to buffer to avoid infinite loops
-    console.error('Failed to send logs:', error);
-    
+    console.error('Development logging server unreachable');
+
     // If we get connection refused errors repeatedly, we might want to disable logging
     if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-      console.warn('Development logging server appears to be offline. Log sending will be paused.');
+      // Disable the logging interval to prevent further attempts
+      if (logSendInterval) {
+        clearInterval(logSendInterval);
+        logSendInterval = null;
+        console.warn('Development logging disabled due to connection failures');
+      }
     }
   }
 };
@@ -83,12 +94,12 @@ const sendLogs = async () => {
 // Set up interval to send logs periodically in development mode only
 let logSendInterval = null;
 if (!isProduction) {
+  // Only set up the interval in development mode
   logSendInterval = setInterval(sendLogs, LOG_SEND_INTERVAL);
-  
-  // If we're really sure we're in development, add a check after 30 seconds
-  // to see if connection failures are consistent and disable if needed
+
+  // Check after 5 seconds if we're getting connection errors
   setTimeout(() => {
-    if (logSendInterval && !isProduction && window.location.hostname === 'localhost') {
+    if (logSendInterval && !isProduction) {
       console.log('Development logging is active');
     }
   }, 5000);
@@ -120,7 +131,7 @@ consoleMethods.forEach(method => {
 // Handle page unload: try to send any remaining logs
 window.addEventListener('beforeunload', () => {
   // Triple-check we're in development mode to prevent any attempts in production
-  if (!isProduction && logBuffer.length > 0 && 
+  if (!isProduction && logBuffer.length > 0 &&
       (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
     try {
       navigator.sendBeacon('http://localhost:4444/logs',

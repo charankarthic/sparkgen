@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "AI-powered gamified learning platform",
   "scripts": {
-    "start": "cd server && NODE_ENV=production node server.js",
+    "start": "cross-env NODE_ENV=production node server/server.js",
     "render-postbuild": "cd client && npm install && npm run build",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "cd server && npm run dev",

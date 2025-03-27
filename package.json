@@ -4,7 +4,7 @@
   "description": "AI-powered gamified learning platform",
   "scripts": {
     "start": "cross-env NODE_ENV=production node server/server.js",
-    "render-postbuild": "cd client && npm install && npm run build",
+    "render-postbuild": "cd client && cross-env NODE_ENV=production npm install && npm run build",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "cd server && npm run dev",
     "client": "cd client && npm run dev",
@@ -33,7 +33,6 @@
   "license": "ISC",
   "dependencies": {
     "concurrently": "^8.2.2",
-    "cross-env": "^7.0.3",
     "dotenv": "^16.4.7",
     "nodemon": "^3.1.9"
   },

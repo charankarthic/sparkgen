@@ -36,7 +36,7 @@ app.enable('strict routing'); // Be consistent with URL paths
 // Middleware setup
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? ['https://sparkgen.vercel.app', 'https://sparkgen-api.onrender.com']
+    ? ['https://sparkgen.vercel.app', 'https://sparkgen-chi.vercel.app', 'https://sparkgen-api.onrender.com']
     : 'http://localhost:5173',
   credentials: true
 }));

@@ -1,5 +1,5 @@
 {
-  "name": "Sparkgen",
+  "name": "sparkgen",
   "version": "1.0.0",
   "description": "AI-powered gamified learning platform",
   "main": "server/server.js",
@@ -15,7 +15,10 @@
     "debug": "concurrently -n \"client,server\" \"npm run client\" \"cross-env NODE_OPTIONS=--inspect-brk=9229 npm run server\"",
     "build": "cd client && npm run build",
     "install-deps": "npm install && cd client && npm install && cd ../server && npm install",
-    "render-postbuild": "npm run install-deps && npm run build"
+    "render-postbuild": "NPM_CONFIG_PRODUCTION=false npm install && npm run install-client && npm run build-client",
+    "install-client": "cd client && npm install",
+    "build-client": "cd client && npm run build",
+    "seed": "cd server && npm run seed"
   },
   "keywords": [
     "ai",

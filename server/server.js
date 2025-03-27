@@ -76,6 +76,7 @@ app.use('/api/chat', chatRoutes);
 // Serve static files from the React app in production
 if (process.env.NODE_ENV === 'production') {
   // Serve static files from the React app build directory
+  console.log('🌐 Serving static files from:', path.join(__dirname, '../client/dist'));
   app.use(express.static(path.join(__dirname, '../client/dist')));
 
   // Handle React routing, return all requests to React app

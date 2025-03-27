@@ -45,13 +45,16 @@ const formatLogEntry = (level, args) => {
  * This is only used in development mode
  */
 const sendLogs = async () => {
-  // Skip sending logs if buffer is empty or we're in production
-  if (logBuffer.length === 0 || isProduction) {
-    logBuffer = []; // Clear buffer in all cases to prevent memory leaks
+  // Immediately return without doing anything in production
+  if (isProduction) {
     return;
   }
 
-  // Local development only beyond this point
+  // Only continue if buffer is not empty
+  if (logBuffer.length === 0) {
+    return;
+  }
+
   const logsToSend = [...logBuffer];
   logBuffer = [];
 
@@ -66,7 +69,6 @@ const sendLogs = async () => {
       throw new Error(`Failed to send logs: HTTP ${response.status}`);
     }
   } catch (error) {
-    // Don't try to log this error to avoid infinite loops
     console.error('Development logging server unreachable');
   }
 };

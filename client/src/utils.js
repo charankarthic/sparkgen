@@ -2,136 +2,149 @@
  * Utility functions for the Sparkgen client
  */
 
-// Check if we're in production environment
-const isProduction = process.env.NODE_ENV === 'production' ||
-                    import.meta.env.PROD ||
-                    !['localhost', '127.0.0.1'].includes(window.location.hostname);
+// Only attempt to log to development server if on localhost
+const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-// Add environment detection logs
-console.log('Environment detection:', {
-  hostname: window.location.hostname,
-  isProduction: isProduction,
-  viteEnv: typeof import.meta.env !== 'undefined' ? import.meta.env.MODE : 'undefined'
-});
+// Logging system - only active in development
+(function setupLogging() {
+    // Skip logging setup in production environments
+    if (!isDevelopment) return;
 
-// Buffer to collect logs before sending them to the server
-let logBuffer = [];
-const MAX_BUFFER_SIZE = 50;
-const LOG_SEND_INTERVAL = 5000; // 5 seconds
+    const LOG_SERVER_URL = 'http://localhost:4444/logs';
+    const logBuffer = [];
+    const MAX_BUFFER_SIZE = 100; // Limit buffer size to prevent memory issues
+    let lastSentHash = ''; // To track if logs have changed
 
-/**
- * Formats a log entry with timestamp and additional metadata
- * @param {string} level - Log level (info, warn, error)
- * @param {Array} args - The log arguments
- * @returns {Object} Formatted log entry
- */
-const formatLogEntry = (level, args) => {
-  const timestamp = new Date().toISOString();
-
-  // Handle various types of log arguments and convert to strings
-  const formattedArgs = args.map(arg => {
-    if (typeof arg === 'object' && arg !== null) {
-      try {
-        return JSON.stringify(arg);
-      } catch (e) {
-        return String(arg);
-      }
+    // Simple hash function for log content
+    function hashLogs(logs) {
+        return logs.map(log => `${log.timestamp}:${log.method}:${log.message.substring(0, 50)}`).join('|');
     }
-    return String(arg);
-  });
 
-  return {
-    timestamp,
-    level,
-    message: formattedArgs.join(' '),
-    userAgent: navigator.userAgent,
-    url: window.location.href
-  };
-};
+    // Function to add a log to the buffer, keeping only the latest logs
+    function addToBuffer(log) {
+        // If buffer is full, remove the oldest entry (first item)
+        if (logBuffer.length >= MAX_BUFFER_SIZE) {
+            logBuffer.shift(); // Remove oldest log
+        }
 
-/**
- * Sends collected logs to the development logging server
- * This is only used in development mode
- */
-const sendLogs = async () => {
-  // Skip completely in production - no logging attempted
-  if (isProduction) {
-    return;
-  }
+        // Add the new log
+        logBuffer.push(log);
 
-  // Only continue if buffer is not empty
-  if (logBuffer.length === 0) {
-    return;
-  }
+        // Reset hash when we add a new log
+        lastSentHash = '';
+    }
 
-  const logsToSend = [...logBuffer];
-  logBuffer = [];
+    function sendLogs() {
+        if (logBuffer.length === 0) return;
 
-  try {
-    const response = await fetch('http://localhost:4444/logs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ logs: logsToSend })
+        // Check if logs have changed since last send
+        const currentHash = hashLogs(logBuffer);
+        if (currentHash === lastSentHash) {
+            return; // No changes, don't send
+        }
+
+        // Copy and clear the buffer
+        const logsToSend = [...logBuffer];
+        logBuffer.length = 0;
+
+        // Update the hash
+        lastSentHash = currentHash;
+
+        fetch(LOG_SERVER_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ logs: logsToSend }),
+        }).catch((err) => {
+            console.error("Failed to send logs:", err);
+            // Put logs back in buffer if sending failed
+            for (const log of logsToSend) {
+                addToBuffer(log); // Use the addToBuffer function to respect size limits
+            }
+        });
+    }
+
+    const consoleMethods = ['log', 'error', 'warn', 'info', 'debug'];
+
+    consoleMethods.forEach((method) => {
+        const originalMethod = console[method];
+        console[method] = function (...args) {
+            const timestamp = new Date().toISOString();
+
+            const message = args
+                .map((arg) => {
+                    if (arg instanceof Error) {
+                        return `${arg.name}: ${arg.message}\n${arg.stack || ''}`;
+                    } else if (typeof arg === 'object' && arg !== null) {
+                        try {
+                            // Handle React component stack traces specially
+                            if (arg.componentStack) {
+                                return `${String(arg.message)}\nComponent Stack:${arg.componentStack}`;
+                            }
+                            return JSON.stringify(arg);
+                        } catch (e) {
+                            return '[Circular]';
+                        }
+                    } else {
+                        return String(arg);
+                    }
+                })
+                .join(' ');
+
+            addToBuffer({
+                method,
+                message: message.trim(),
+                timestamp
+            });
+
+            originalMethod.apply(console, args);
+        };
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to send logs: HTTP ${response.status}`);
-    }
-  } catch (error) {
-    console.error('Development logging server unreachable');
-  }
-};
+    // Capture unhandled JavaScript errors
+    window.onerror = function (message, source, lineno, colno, error) {
+        const timestamp = new Date().toISOString();
+        const errorName = error && error.name ? error.name : 'Error';
 
-// Set up interval to send logs periodically in development mode only
-let logSendInterval = null;
-if (!isProduction) {
-  logSendInterval = setInterval(sendLogs, LOG_SEND_INTERVAL);
-}
+        addToBuffer({
+            method: 'error',
+            message: `${errorName}: ${message} at ${source}:${lineno}:${colno}`,
+            timestamp,
+        });
+    };
 
-// Log interval setup status
-console.log('Log sending interval setup:', {
-  isIntervalSet: logSendInterval !== null,
-  isProduction: isProduction
-});
+    // Capture resource loading errors - using throttling to prevent overwhelming
+    let lastResourceErrorTime = 0;
+    window.addEventListener(
+        'error',
+        (event) => {
+            const now = Date.now();
+            if (now - lastResourceErrorTime < 500) return; // Throttle to max one per 500ms
+            lastResourceErrorTime = now;
 
-// Override console methods to capture logs in development only
-const originalConsole = {};
-const consoleMethods = ['log', 'info', 'warn', 'error', 'debug'];
+            if (
+                event.target instanceof HTMLImageElement ||
+                event.target instanceof HTMLScriptElement ||
+                event.target instanceof HTMLLinkElement
+            ) {
+                const timestamp = new Date().toISOString();
+                addToBuffer({
+                    method: 'error',
+                    message: `Resource error: ${event.target.tagName} failed to load. URL: ${event.target.src || event.target.href}`,
+                    timestamp,
+                });
+            }
+        },
+        true
+    );
 
-consoleMethods.forEach(method => {
-  originalConsole[method] = console[method];
+    // Periodically send logs every 3 seconds
+    setInterval(sendLogs, 3000);
 
-  console[method] = (...args) => {
-    // Call the original console method
-    originalConsole[method](...args);
-
-    // Only add to log buffer in development
-    if (!isProduction) {
-      logBuffer.push(formatLogEntry(method, args));
-
-      // If buffer gets too large, send logs immediately
-      if (logBuffer.length >= MAX_BUFFER_SIZE) {
-        sendLogs();
-      }
-    }
-  };
-});
-
-// Handle page unload: try to send any remaining logs in development only
-if (!isProduction) {
-  window.addEventListener('beforeunload', () => {
-    try {
-      navigator.sendBeacon('http://localhost:4444/logs',
-        JSON.stringify({ logs: logBuffer })
-      );
-    } catch (error) {
-      // We can't do much on unload, but at least we tried
-    }
-
-    // Clear buffer regardless of success
-    logBuffer = [];
-  });
-}
+    // Send remaining logs on page unload
+    window.addEventListener('beforeunload', sendLogs);
+})();
 
 /**
  * Sleeps for the specified duration

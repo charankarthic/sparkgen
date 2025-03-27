@@ -1,1 +1,46 @@
-{"name": "sparkgen", "version": "1.0.0", "description": "AI-powered gamified learning platform", "scripts": {"start": "cd server && node server.js", "render-postbuild": "cd client && npm install && npm run build", "dev": "concurrently \"npm run server\" \"npm run client\"", "server": "cd server && npm run dev", "client": "cd client && npm run dev", "build": "cd client && npm run build", "postinstall": "concurrently -n \"client,server\" \"npm run client-install\" \"npm run server-install\"", "test": "echo \"Error: no test specified\" && exit 1", "client-install": "cd client && npm install", "server-install": "cd server && npm install", "debug": "concurrently -n \"client,server\" \"npm run client\" \"cross-env NODE_OPTIONS=--inspect-brk=9229 npm run server\"", "install-deps": "npm install && cd client && npm install && cd ../server && npm install", "install-all": "npm install && cd client && npm install && cd ../server && npm install", "install-client": "cd client && npm install", "install-server": "cd server && npm install", "build-client": "cd client && npm run build", "seed": "cd server && npm run seed", "render-start": "npm run start", "heroku-postbuild": "npm run install-client && npm run build-client"}, "keywords": ["ai", "learning", "quiz", "game"], "author": "", "license": "ISC", "dependencies": {"concurrently": "^8.2.2", "cross-env": "^7.0.3", "dotenv": "^16.4.7", "nodemon": "^3.1.9"}, "engines": {"node": ">=18.0.0"}, "devDependencies": {"cross-env": "^7.0.3"}}
+{
+  "name": "sparkgen",
+  "version": "1.0.0",
+  "description": "AI-powered gamified learning platform",
+  "scripts": {
+    "start": "cd server && NODE_ENV=production node server.js",
+    "render-postbuild": "cd client && npm install && npm run build",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "postinstall": "concurrently -n \"client,server\" \"npm run client-install\" \"npm run server-install\"",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "client-install": "cd client && npm install",
+    "server-install": "cd server && npm install",
+    "debug": "concurrently -n \"client,server\" \"npm run client\" \"cross-env NODE_OPTIONS=--inspect-brk=9229 npm run server\"",
+    "install-deps": "npm install && cd client && npm install && cd ../server && npm install",
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
+    "install-client": "cd client && npm install",
+    "install-server": "cd server && npm install",
+    "build-client": "cd client && npm run build",
+    "seed": "cd server && npm run seed",
+    "render-start": "npm run start",
+    "heroku-postbuild": "npm run install-client && npm run build-client"
+  },
+  "keywords": [
+    "ai",
+    "learning",
+    "quiz",
+    "game"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.7",
+    "nodemon": "^3.1.9"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
+  }
+}

@@ -12,6 +12,7 @@ const quizRoutes = require('./routes/quiz');
 const profileRoutes = require('./routes/profile');
 const chatRoutes = require('./routes/chat');
 const adminRoutes = require('./routes/admin');
+const logsRouter = require('./routes/logs');
 
 // Create Express app
 const app = express();
@@ -43,15 +44,16 @@ app.use('/api/quizzes', quizRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/logs', logsRouter);
 
 // Connect to MongoDB
-mongoose.connect(config.mongoURI, { 
-  useNewUrlParser: true, 
-  useUnifiedTopology: true 
+mongoose.connect(config.mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
 })
 .then(() => {
   console.log(`MongoDB Connected: ${mongoose.connection.host} to database: ${mongoose.connection.name}`);
-  
+
   // Seed initial data if needed
   if (config.seedData) {
     const seedData = require('./utils/seedData');

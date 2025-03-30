@@ -61,21 +61,27 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
         }
 
         lastServerCheckTime = now;
-        return fetch(`${LOG_SERVER_URL}/ping`, {
-            method: 'HEAD',
-            // Use AbortController to timeout if it takes too long
-            signal: AbortSignal.timeout(3000) // 3 second timeout
-        })
-        .then(() => {
-            // Server is available
-            logServerAvailable = true;
-            return true;
-        })
-        .catch(() => {
-            // Server is not available
-            logServerAvailable = false;
-            return false;
+
+        // Use a timeout promise to prevent hanging requests
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Timeout')), 3000);
         });
+
+        const fetchPromise = fetch(`${LOG_SERVER_URL}/ping`, {
+            method: 'HEAD'
+        });
+
+        return Promise.race([fetchPromise, timeoutPromise])
+            .then(() => {
+                // Server is available
+                logServerAvailable = true;
+                return true;
+            })
+            .catch(() => {
+                // Server is not available
+                logServerAvailable = false;
+                return false;
+            });
     }
 
     // Simple hash function for log content
@@ -118,7 +124,13 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
 
     function sendLogs(forceSend = false) {
         // If already retrying, no logs to send, or server known to be unavailable, skip
-        if (isRetrying || logBuffer.length === 0 || (!forceSend && !logServerAvailable)) {
+        if (isRetrying || logBuffer.length === 0) {
+            return Promise.resolve(false);
+        }
+
+        // If server is unavailable and we're not forcing a send, just store and exit
+        if (!forceSend && !logServerAvailable) {
+            saveBufferToStorage();
             return Promise.resolve(false);
         }
 
@@ -153,78 +165,84 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
                 return false;
             }
 
-            // Server seems available, try to send logs
-            return fetch(LOG_SERVER_URL, {
+            // Create a timeout promise to prevent hanging requests
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Timeout')), 5000);
+            });
+
+            // Create the fetch promise
+            const fetchPromise = fetch(LOG_SERVER_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ logs: logsToSend }),
-                // Add a timeout to the fetch request
-                signal: AbortSignal.timeout(5000)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Server responded with ${response.status}`);
-                }
-                // Success - clear the logs we just sent
-                logBuffer.length = 0;
-                retryCount = 0;
-                logServerAvailable = true;
-
-                // Clear from local storage
-                try {
-                    localStorage.removeItem(STORAGE_KEY);
-                } catch (e) {
-                    // Ignore local storage errors
-                }
-                return true;
-            })
-            .catch((err) => {
-                // Don't spam the console with these network errors
-                if (retryCount === 0) {
-                    // Only log on first retry
-                    const errorMsg = `Log server error: ${err.message || 'Network error'}`;
-
-                    // Use the original console method to avoid recursion
-                    const originalError = console.__originalError || console.error;
-                    originalError.call(console, errorMsg);
-                }
-
-                // If it's a network error, mark server as unavailable
-                if (err.name === 'TypeError' && err.message.includes('fetch')) {
-                    logServerAvailable = false;
-                }
-
-                // Implement exponential backoff for retries
-                if (retryCount < MAX_RETRY_ATTEMPTS) {
-                    const backoffTime = getBackoffTime();
-                    retryCount++;
-
-                    // Schedule retry with backoff
-                    clearTimeout(retryTimeout);
-                    retryTimeout = setTimeout(() => {
-                        isRetrying = false;
-                        sendLogs(true); // Force send on retry
-                    }, backoffTime);
-
-                    // Save to local storage for persistence between page loads
-                    saveBufferToStorage();
-                } else {
-                    // Max retries reached, keep in buffer for next regular attempt
-                    isRetrying = false;
-                    retryCount = 0;
-
-                    // Save to storage as backup
-                    saveBufferToStorage();
-                }
-                return false;
-            })
-            .finally(() => {
-                if (retryCount === 0) {
-                    isRetrying = false;
-                }
+                body: JSON.stringify({ logs: logsToSend })
             });
+
+            // Race the fetch against the timeout
+            return Promise.race([fetchPromise, timeoutPromise])
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Server responded with ${response.status}`);
+                    }
+                    // Success - clear the logs we just sent
+                    logBuffer.length = 0;
+                    retryCount = 0;
+                    logServerAvailable = true;
+
+                    // Clear from local storage
+                    try {
+                        localStorage.removeItem(STORAGE_KEY);
+                    } catch (e) {
+                        // Ignore local storage errors
+                    }
+                    return true;
+                })
+                .catch((err) => {
+                    // Don't spam the console with these network errors
+                    if (retryCount === 0) {
+                        // Only log on first retry
+                        const errorMsg = `Log server error: ${err.message || 'Network error'}`;
+
+                        // Use the original console method to avoid recursion
+                        const originalError = console.__originalError || console.error;
+                        originalError.call(console, errorMsg);
+                    }
+
+                    // If it's a network error, mark server as unavailable
+                    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+                        logServerAvailable = false;
+                    }
+
+                    // Implement exponential backoff for retries
+                    if (retryCount < MAX_RETRY_ATTEMPTS) {
+                        const backoffTime = getBackoffTime();
+                        retryCount++;
+
+                        // Schedule retry with backoff
+                        clearTimeout(retryTimeout);
+                        retryTimeout = setTimeout(() => {
+                            isRetrying = false;
+                            sendLogs(true); // Force send on retry
+                        }, backoffTime);
+
+                        // Save to local storage for persistence between page loads
+                        saveBufferToStorage();
+                    } else {
+                        // Max retries reached, keep in buffer for next regular attempt
+                        isRetrying = false;
+                        retryCount = 0;
+
+                        // Save to storage as backup
+                        saveBufferToStorage();
+                    }
+                    return false;
+                })
+                .finally(() => {
+                    if (retryCount === 0) {
+                        isRetrying = false;
+                    }
+                });
         });
     }
 
@@ -262,7 +280,7 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
                 .join(' ');
 
             // Skip logging our own logging errors to avoid recursion
-            if (!message.includes('Failed to send logs')) {
+            if (!message.includes('Failed to send logs') && !message.includes('Log server error')) {
                 addToBuffer({
                     method,
                     message: message.trim(),

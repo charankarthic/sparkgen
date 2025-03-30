@@ -8,7 +8,7 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
 // Logging system - active in all environments but with different endpoints
 (function setupLogging() {
     // Use the deployed backend URL for logging in all environments
-    const LOG_SERVER_URL = 'https://sparkgen.onrender.com/api/logs';  // Replace with your actual Render backend URL
+    const LOG_SERVER_URL = '/api/logs';  // Use relative URL to work with any domain
 
     const logBuffer = [];
     const MAX_BUFFER_SIZE = 100; // Limit buffer size to prevent memory issues
@@ -268,10 +268,6 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
                         return `${arg.name}: ${arg.message}\n${arg.stack || ''}`;
                     } else if (typeof arg === 'object' && arg !== null) {
                         try {
-                            // Handle React component stack traces specially
-                            if (arg.componentStack) {
-                                return `${String(arg.message)}\nComponent Stack:${arg.componentStack}`;
-                            }
                             return JSON.stringify(arg);
                         } catch (e) {
                             return '[Circular]';
@@ -283,7 +279,7 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
                 .join(' ');
 
             // Skip logging our own logging errors to avoid recursion
-            if (!message.includes('Failed to send logs') && !message.includes('Log server error')) {
+            if (!message.includes('Failed to send logs')) {
                 addToBuffer({
                     method,
                     message: message.trim(),
@@ -380,7 +376,7 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
         checkLogServerAvailability();
     }
 
-    // Periodically send logs every 5 seconds (increased from 3 to reduce frequency)
+    // Periodically send logs every 5 seconds
     setInterval(() => {
         if (navigator.onLine) {
             sendLogs();

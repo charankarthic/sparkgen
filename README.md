@@ -1,57 +1,57 @@
-```markdown
 # Sparkgen
 
-Sparkgen is an AI-powered gamified learning platform that enables users to play AI-generated quizzes, track achievements, and interact with an AI assistant for learning support. DeepSeek R1 API via OpenRouter is used to generate the quiz content and provide chatbot assistance.
+Sparkgen is an AI-powered gamified learning platform that enables users to play AI-generated quizzes, track achievements, and interact with an AI assistant for learning support. The app uses an API key from DeepSeek R1 via OpenRouter to generate quiz content and provide chatbot assistance.
 
 ## Overview
 
-### Architecture and Technologies
+The Sparkgen app is implemented using a client-server architecture with ReactJS for the frontend and Node.js + Express for the backend. 
 
-Sparkgen is built with a client-server architecture:
+### Architecture
 
 - **Frontend:** 
-  - **ReactJS** with Vite devserver
-  - **Shadcn-ui** component library integrated with Tailwind CSS framework
-  - **React Router** for client-side routing
-  - **Axios** for API requests
+  - ReactJS-based frontend located in the `client/` folder, served using Vite.
+  - The frontend uses Shadcn-UI component library with Tailwind CSS for styling.
+  - Client-side routing is implemented using `react-router-dom`.
+  - Runs on port 5173.
 
 - **Backend:**
-  - **Node.js** with **Express** for REST API implementation
-  - **MongoDB Atlas** for cloud-based data management, using Mongoose for database operations
-  - **Authentication** with JWT tokens
-  - **Dynamic content generation with DeepSeek R1 API via OpenRouter**
-  - **API key management to tailor quiz difficulty levels**
+  - Express-based server implementing REST API endpoints in the `server/` folder.
+  - Uses MongoDB Atlas for cloud-based data management.
+  - The backend runs on port 3000 and is deployed on Render.
 
 ### Project Structure
 
-- **client/** - ReactJS frontend source code
-  - *src/* - frontend source code
-  - *public/* - public assets
-  - *tailwind.config.js* - TailwindCSS configuration
-  - *vite.config.ts* - Vite configuration for the frontend devserver
+The project is divided into the following main directories:
 
-- **server/** - Node.js backend source code
-  - *api/* - Express routes and middleware
-  - *models/* - Mongoose schemas
-  - *services/* - Application logic and third-party APIs integration
-  - *utils/* - Utility functions
-  - *config/* - Configuration and constants
-  - *app.js* - Main entry point for the backend application
+- `client/`: Contains the React frontend code.
+  - `src/`: Main source code directory for the client.
+    - `api/`: API request definitions.
+    - `components/`: Reusable React components.
+    - `contexts/`: Context providers for managing state like authentication.
+    - `hooks/`: Custom hooks for various functionalities.
+    - `pages/`: Page components for different routes.
+    - `utils/`: Utility functions.
+    
+- `server/`: Contains the Node.js backend code.
+  - `controllers/`: Business logic controllers.
+  - `middleware/`: Express middleware.
+  - `models/`: Mongoose models for MongoDB.
+  - `routes/`: Express route definitions.
+  - `services/`: Services for handling business logic and external API interactions.
+  - `utils/`: Utility functions and configurations.
 
 ## Features
 
 1. **Authentication Pages:**
-   - **Register, Login, and Logout functionality.**
+   - Allows users to register, login, and logout.
 
 2. **Home Page:**
-   - Displays a welcome message.
-   - Shows user XP points, levels, and recent achievements if logged in.
-   - Displays available AI-powered quizzes.
+   - Displays a welcome message, XP points, levels, and recent achievements.
+   - Lists available AI-powered quizzes with a "Start Game" or "Play Again" button.
 
 3. **Games Page:**
-   - Displays AI-powered quizzes (Math Quiz, Escape Room, Coding Quiz, Science Quiz, Word Scramble, Grammar Quiz).
-   - AI-generated questions using DeepSeek R1 API tailored to user levels.
-   - Dynamic adjustment of game difficulty based on user performance.
+   - Lists AI-powered quizzes such as Math Quiz, Escape Room, Coding Quiz, Science Quiz, Word Scramble, and Grammar Quiz.
+   - Quizzes dynamically adjust difficulty based on user performance.
 
 4. **Achievements Page:**
    - Shows badges earned, XP points, levels, and unlockable challenges.
@@ -61,83 +61,69 @@ Sparkgen is built with a client-server architecture:
    - Displays user stats, progress, and personalized game recommendations.
 
 6. **Floating AI Chatbot Assistant:**
-   - AI tutor providing hints, explanations, and detailed solutions.
-   - Available across all pages.
-   - Powered by DeepSeek R1 API.
+   - Provides hints and explanations for quiz questions, powered by DeepSeek R1 API via OpenRouter.
+   - Available on all pages.
 
-7. **API Integration for AI-generated quizzes:**
-   - Dynamic question generation upon starting a quiz.
+7. **API Integration for AI-Generated Quizzes:**
+   - Questions are dynamically generated using the DeepSeek R1 API via OpenRouter based on the user's difficulty level.
 
 ## Getting Started
 
 ### Requirements
 
-To run the project, ensure you have the following installed:
-
-- **Node.js** (v14 or higher)
-- **npm** (v6 or higher)
-- **MongoDB Atlas** account
+- Node.js (>= 14.x)
+- npm (>= 6.x)
+- MongoDB Atlas account
+- Vite (for frontend development)
+- Render account (for deployment)
 
 ### Quickstart
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/charankarthic/sparkgen.git
    cd sparkgen
    ```
 
-2. **Install dependencies:**
+2. **Set up environment variables:**
 
-   - For frontend:
-     ```bash
-     cd client
-     npm install
-     ```
+   - Create a `.env` file in both the `client/` and `server/` directories based on their respective `.env.example` files.
+   - Update the MongoDB Atlas connection string and other required variables.
 
-   - For backend:
-     ```bash
-     cd ../server
-     npm install
-     ```
+3. **Install dependencies:**
 
-3. **Set up environment variables:**
-
-   - Create a `.env` file in the `server` directory with the following content:
-     ```
-     PORT=3000
-     DATABASE_URL=YOUR_MONGODB_ATLAS_URL
-     JWT_SECRET=YOUR_JWT_SECRET
-     OPENROUTER_API_KEY=YOUR_OPENROUTER_API_KEY
-     OPENAI_API_KEY=YOUR_OPENAI_API_KEY
-     ANTHROPIC_API_KEY=YOUR_ANTHROPIC_API_KEY
-     ```
-
-4. **Seed the initial quiz data:**
    ```bash
+   # Install server dependencies
    cd server
-   npm run seed
+   npm install
+
+   # Install client dependencies
+   cd ../client
+   npm install
    ```
 
-5. **Start the development server:**
+4. **Run the development servers:**
 
-   - For frontend:
-     ```bash
-     cd ../client
-     npm run dev
-     ```
+   ```bash
+   # In one terminal, start the backend
+   cd server
+   npm run dev
 
-   - For backend:
-     ```bash
-     cd ../server
-     npm run dev
-     ```
+   # In another terminal, start the frontend
+   cd client
+   npm run dev
+   ```
 
-6. **Access the application:**
-   - Open your browser and navigate to `http://localhost:5173`
+5. **Open the app:**
+
+   - The backend will be running on `http://localhost:3000`.
+   - The frontend will be running on `http://localhost:5173`.
 
 ### License
 
-The project is proprietary (not open source).
+The project is proprietary (not open source). 
 
-(c) 2024.
+```
+© 2024. All rights reserved.
 ```

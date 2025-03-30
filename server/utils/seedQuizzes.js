@@ -16,7 +16,7 @@ async function seedQuizzes() {
         description: 'Test your math skills with algebra and geometry questions'
       },
       {
-        title: 'Escape Room (General Knowledge)',
+        title: 'General Knowledge Quiz',
         type: 'general',
         description: 'Solve riddles and puzzles to escape the virtual room'
       },

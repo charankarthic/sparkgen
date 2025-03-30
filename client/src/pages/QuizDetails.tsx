@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { getQuizQuestions, submitQuiz } from "@/api/quiz";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { useToast } from "@/hooks/useToast";
 import { Trophy, Award, Check, X } from "lucide-react";
+import Confetti from "react-confetti";
+import { useWindowSize } from "@/hooks/useWindowSize";
 
 // Add a CSS class to disable transitions
 const noTransitionClass = "!transition-none !transform-none !animate-none";
@@ -21,6 +23,10 @@ export function QuizDetails() {
   const [answers, setAnswers] = useState<{ questionId: string; answer: string }[]>([]);
   const [results, setResults] = useState<any>(null);
   const [answeredQuestions, setAnsweredQuestions] = useState<any[]>([]);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  // Get window size for confetti
+  const { width, height } = useWindowSize();
 
   // Add a ref to track if the request has been made
   const fetchInProgress = useRef(false);
@@ -148,6 +154,15 @@ export function QuizDetails() {
           description: `You scored ${result.correct} out of ${result.total} (${result.score}%)`,
         });
 
+        // Show confetti animation for perfect score
+        if (result.score === 100) {
+          setShowConfetti(true);
+          // Hide confetti after 8 seconds
+          setTimeout(() => {
+            setShowConfetti(false);
+          }, 8000);
+        }
+
         // Show achievement toast if earned
         if (result.achievements && result.achievements.length > 0) {
           result.achievements.forEach((achievement: any) => {
@@ -205,10 +220,36 @@ export function QuizDetails() {
   if (results) {
     return (
       <div className="space-y-6">
+        {/* Confetti component that shows only for perfect scores */}
+        {showConfetti && (
+          <Confetti
+            width={width}
+            height={height}
+            recycle={true}
+            numberOfPieces={500}
+            gravity={0.2}
+            colors={['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4']}
+          />
+        )}
+
         <h1 className="text-3xl font-bold">Quiz Results</h1>
+
+        {/* Add a special banner for perfect score */}
+        {results.score === 100 && (
+          <div className="bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 text-white p-4 rounded-lg shadow-lg animate-pulse mb-4">
+            <h2 className="text-2xl font-bold text-center">PERFECT SCORE! 🎉</h2>
+            <p className="text-center">Amazing job! You've answered all questions correctly!</p>
+          </div>
+        )}
+
         <Card className={noTransitionClass}>
           <CardHeader>
             <CardTitle>Your Score: {results.score}%</CardTitle>
+            {results.score === 100 && (
+              <CardDescription className="font-bold text-lg">
+                Incredible! A perfect score!
+              </CardDescription>
+            )}
           </CardHeader>
           <CardContent>
             <p className="mb-4">

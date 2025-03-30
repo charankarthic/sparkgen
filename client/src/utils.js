@@ -7,10 +7,8 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
 
 // Logging system - active in all environments but with different endpoints
 (function setupLogging() {
-    // Use appropriate logging endpoint based on environment
-    const LOG_SERVER_URL = isDevelopment
-        ? 'http://localhost:4444/logs'  // Development endpoint
-        : '/api/logs';  // Production endpoint using relative URL to our own API route
+    // Use the deployed backend URL for logging in all environments
+    const LOG_SERVER_URL = 'https://sparkgen.onrender.com/api/logs';  // Replace with your actual Render backend URL
 
     const logBuffer = [];
     const MAX_BUFFER_SIZE = 100; // Limit buffer size to prevent memory issues

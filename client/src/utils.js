@@ -2,7 +2,7 @@
  * Utility functions for the Sparkgen client
  */
 
-// Only attempt to log to development server if on localhost
+// Determine environment based on hostname
 const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
 // Logging system - only active in development
@@ -10,7 +10,13 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
     // Skip logging setup in production environments
     if (!isDevelopment) return;
 
-    const LOG_SERVER_URL = 'http://localhost:4444/logs';
+    // Use a relative URL for logging or point to correct backend URL
+    // For local development, use localhost:4444
+    // For production, use the Render backend URL
+    const LOG_SERVER_URL = isDevelopment
+        ? 'http://localhost:4444/logs'
+        : 'https://sparkgen.onrender.com/logs'; // Replace with your actual Render backend URL
+
     const logBuffer = [];
     const MAX_BUFFER_SIZE = 100; // Limit buffer size to prevent memory issues
     let lastSentHash = ''; // To track if logs have changed
@@ -68,7 +74,9 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
         });
 
         const fetchPromise = fetch(`${LOG_SERVER_URL}/ping`, {
-            method: 'HEAD'
+            method: 'HEAD',
+            mode: 'cors',  // Explicitly set CORS mode
+            credentials: 'include', // Include credentials if needed
         });
 
         return Promise.race([fetchPromise, timeoutPromise])
@@ -170,12 +178,14 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
                 setTimeout(() => reject(new Error('Timeout')), 5000);
             });
 
-            // Create the fetch promise
+            // Create the fetch promise with proper CORS configuration
             const fetchPromise = fetch(LOG_SERVER_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                mode: 'cors',
+                credentials: 'include', // Include cookies if your auth requires it
                 body: JSON.stringify({ logs: logsToSend })
             });
 

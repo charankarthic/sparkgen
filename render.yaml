@@ -2,16 +2,31 @@ services:
   - type: web
     name: sparkgen
     env: node
-    buildCommand: npm run render-postbuild
-    startCommand: npm start
+    buildCommand: npm install && cd client && npm install && npm run build && cd ..
+    startCommand: node server/server.js
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DATABASE_URL
+      - key: PORT
+        value: 3000
+      - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
         sync: false
-      - key: JWT_REFRESH_SECRET
+      - key: REFRESH_TOKEN_SECRET
         sync: false
       - key: OPENROUTER_API_KEY
         sync: false
+    headers:
+      - path: /*
+        name: Access-Control-Allow-Origin
+        value: https://sparkgen.vercel.app
+      - path: /*
+        name: Access-Control-Allow-Methods
+        value: GET, POST, PUT, DELETE, OPTIONS
+      - path: /*
+        name: Access-Control-Allow-Headers
+        value: Content-Type, Authorization
+      - path: /*
+        name: Access-Control-Allow-Credentials
+        value: true

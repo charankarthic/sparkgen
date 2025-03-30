@@ -16,8 +16,20 @@ const adminRoutes = require('./routes/admin');
 // Create Express app
 const app = express();
 
-// Middleware
-app.use(cors());
+// Enhanced CORS configuration
+app.use(cors({
+  origin: [
+    'https://sparkgen.vercel.app',     // Vercel production domain
+    'https://sparkgen-git-main-charankarthic.vercel.app', // Vercel preview domain
+    /^https:\/\/sparkgen-.*\.vercel\.app$/,  // Any Vercel deployment for this project
+    'http://localhost:5173',           // Local development frontend
+    'http://localhost:3000'            // Local development backend
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

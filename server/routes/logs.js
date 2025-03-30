@@ -17,4 +17,9 @@ router.head('/ping', (req, res) => {
     res.status(200).end();
 });
 
+// GET ping endpoint for connectivity testing
+router.get('/ping', (req, res) => {
+  res.status(200).send('pong');
+});
+
 module.exports = router;

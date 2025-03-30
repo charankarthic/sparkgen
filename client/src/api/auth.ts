@@ -1,5 +1,6 @@
 import api from './api';
 import { AxiosError } from 'axios';
+import { toast } from 'sonner';
 
 // Description: Login user functionality
 // Endpoint: POST /api/auth/login
@@ -7,17 +8,38 @@ import { AxiosError } from 'axios';
 // Response: { accessToken: string, refreshToken: string, user: { _id: string, email: string, displayName: string } }
 export const login = async (email: string, password: string) => {
   try {
-    const response = await api.post('/api/auth/login', { email, password });
-    return response.data;
-  } catch (error) {
-    console.error('Login error:', error);
-    if (error instanceof AxiosError && error.response?.data?.message) {
-      throw new Error(error.response.data.message);
-    } else if (error instanceof Error) {
-      throw new Error(error.message);
-    } else {
-      throw new Error('Login failed');
+    // Check server connectivity first
+    const isServerOnline = await api.ping();
+    if (!isServerOnline) {
+      toast.error('Cannot connect to the server. Please check your internet connection or try again later.');
+      throw new Error('Server is not reachable. Please check your internet connection or try again later.');
     }
+
+    // Proceed with login
+    console.log('Attempting login for:', email);
+    const response = await api.post('/api/auth/login', { email, password });
+    console.log('Login successful');
+    return response.data;
+  } catch (error: any) {
+    console.error('Login error:', error);
+
+    // Provide more specific error messages
+    if (error.code === 'ERR_NETWORK') {
+      toast.error('Network error: Unable to connect to the server. Please check if the server is running.');
+      throw new Error('Network error: Unable to connect to the server. Please check if the server is running.');
+    }
+
+    if (error.response) {
+      // The server responded with a status code outside the 2xx range
+      const message = error.response.data?.message || 'Login failed. Please check your credentials.';
+      toast.error(message);
+      throw new Error(message);
+    }
+
+    // For other errors
+    const errorMessage = error.message || 'An unexpected error occurred during login';
+    toast.error(errorMessage);
+    throw new Error(errorMessage);
   }
 };
 

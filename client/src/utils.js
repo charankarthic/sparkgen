@@ -14,6 +14,7 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
     const MAX_BUFFER_SIZE = 100; // Limit buffer size to prevent memory issues
     let lastSentHash = ''; // To track if logs have changed
     const STORAGE_KEY = 'sparkgen_log_buffer';
+    const OFFLINE_LOGS_KEY = 'offlineLogs';
     const MAX_RETRY_ATTEMPTS = 5;
     let isRetrying = false;
     let retryCount = 0;
@@ -129,6 +130,16 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
             return Promise.resolve(false);
         }
 
+        // Don't try to send logs if we know we're offline
+        if (!navigator.onLine) {
+            // Store logs locally until we can send them
+            console.warn('Offline: Logs will be sent when connection is restored');
+            const storedLogs = JSON.parse(localStorage.getItem(OFFLINE_LOGS_KEY) || '[]');
+            localStorage.setItem(OFFLINE_LOGS_KEY, JSON.stringify([...storedLogs, ...logBuffer]));
+            saveBufferToStorage();
+            return Promise.resolve(false);
+        }
+
         // If server is unavailable and we're not forcing a send, just store and exit
         if (!forceSend && !logServerAvailable) {
             saveBufferToStorage();
@@ -162,6 +173,11 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
             if (!serverAvailable) {
                 // Server not available, save to storage and exit
                 saveBufferToStorage();
+                
+                // Also store in offline logs for when we come back online
+                const storedLogs = JSON.parse(localStorage.getItem(OFFLINE_LOGS_KEY) || '[]');
+                localStorage.setItem(OFFLINE_LOGS_KEY, JSON.stringify([...storedLogs, ...logsToSend]));
+                
                 isRetrying = false;
                 return false;
             }
@@ -186,7 +202,7 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
             return Promise.race([fetchPromise, timeoutPromise])
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(`Server responded with ${response.status}`);
+                        throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
                     }
                     // Success - clear the logs we just sent
                     logBuffer.length = 0;
@@ -199,6 +215,18 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
                     } catch (e) {
                         // Ignore local storage errors
                     }
+                    
+                    // Check if there are offline logs to send
+                    const offlineLogs = JSON.parse(localStorage.getItem(OFFLINE_LOGS_KEY) || '[]');
+                    if (offlineLogs.length > 0) {
+                        console.log('Sending previously stored offline logs');
+                        // Add offline logs to the buffer and trigger a send
+                        offlineLogs.forEach(log => addToBuffer(log, false));
+                        localStorage.removeItem(OFFLINE_LOGS_KEY);
+                        // Schedule sending these logs
+                        setTimeout(() => sendLogs(true), 500);
+                    }
+                    
                     return true;
                 })
                 .catch((err) => {
@@ -216,6 +244,10 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
                     if (err.name === 'TypeError' && err.message.includes('fetch')) {
                         logServerAvailable = false;
                     }
+
+                    // Store logs for offline retrieval
+                    const storedLogs = JSON.parse(localStorage.getItem(OFFLINE_LOGS_KEY) || '[]');
+                    localStorage.setItem(OFFLINE_LOGS_KEY, JSON.stringify([...storedLogs, ...logsToSend]));
 
                     // Implement exponential backoff for retries
                     if (retryCount < MAX_RETRY_ATTEMPTS) {
@@ -358,6 +390,16 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
     window.addEventListener('online', () => {
         // When we come back online, try sending logs immediately
         logServerAvailable = true; // Reset this flag when we come back online
+        
+        // Check for offline logs and send them
+        const offlineLogs = JSON.parse(localStorage.getItem(OFFLINE_LOGS_KEY) || '[]');
+        if (offlineLogs.length > 0) {
+            console.log('Back online - sending stored logs');
+            // Add offline logs to the buffer
+            offlineLogs.forEach(log => addToBuffer(log, false));
+            localStorage.removeItem(OFFLINE_LOGS_KEY);
+        }
+        
         sendLogs(true);
     });
 

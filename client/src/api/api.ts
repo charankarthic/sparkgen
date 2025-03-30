@@ -1,14 +1,22 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-// Get the API base URL from environment variables or use the current origin in production
+// Get the API base URL from environment variables or use dynamic detection
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ||
-  (window.location.origin.includes('localhost') ? '' : window.location.origin);
+  (window.location.hostname.includes('vercel.app')
+    ? 'https://sparkgen-api.onrender.com'
+    : window.location.origin.includes('localhost')
+      ? ''
+      : window.location.origin);
+
+console.log('Using API base URL:', API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Important for CORS with credentials
+  timeout: 10000, // 10 second timeout
   validateStatus: (status) => {
     return status >= 200 && status < 300;
   },
@@ -18,22 +26,38 @@ let accessToken: string | null = null;
 
 // Axios request interceptor: Attach access token to headers
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
+  (config: InternalAxiosRequestConfig) => {
+    // Log outgoing requests in development
+    if (import.meta.env.DEV) {
+      console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    }
+
     if (!accessToken) {
       accessToken = localStorage.getItem('accessToken');
     }
+
     if (accessToken && config.headers) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
+
     return config;
   },
-  (error: AxiosError): Promise<AxiosError> => Promise.reject(error)
+  (error: AxiosError) => {
+    console.error('Request error:', error.message);
+    return Promise.reject(error);
+  }
 );
 
 // Axios response interceptor: Handle 401 errors
 api.interceptors.response.use(
   (response) => response, // If the response is successful, return it
-  async (error: AxiosError): Promise<any> => {
+  async (error: AxiosError) => {
+    // Handle network errors
+    if (error.message === 'Network Error') {
+      console.error('Network error - unable to connect to API');
+      return Promise.reject(new Error('Unable to connect to server. Please check your internet connection.'));
+    }
+
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     // If the error is due to an expired access token
@@ -61,8 +85,12 @@ api.interceptors.response.use(
         }
 
         // Call the refresh endpoint with the token that we've verified is not null
-        const response = await axios.post<RefreshResponse>('/api/auth/refresh', {
-          refreshToken: refreshToken as string  // Type assertion here
+        const response = await axios.post<RefreshResponse>(`${API_BASE_URL}/api/auth/refresh`, {
+          refreshToken: refreshToken
+        }, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
         });
 
         const data = response.data;
@@ -91,6 +119,15 @@ api.interceptors.response.use(
         window.location.href = '/login'; // Redirect to login page
         return Promise.reject(err);
       }
+    }
+
+    // Log errors in development
+    if (import.meta.env.DEV) {
+      console.error('API Response Error:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
     }
 
     return Promise.reject(error); // Pass other errors through

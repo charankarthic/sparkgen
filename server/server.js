@@ -36,14 +36,20 @@ app.enable('strict routing'); // Be consistent with URL paths
 // Middleware setup
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? ['https://sparkgen.vercel.app', 'https://sparkgen-chi.vercel.app', 'https://sparkgen-api.onrender.com', 'https://sparkgen.onrender.com']
+    ? [
+        'https://sparkgen.vercel.app',
+        'https://sparkgen-chi.vercel.app',
+        'https://sparkgen-git-main-charankarthic.vercel.app',
+        /^https:\/\/sparkgen-.*\.vercel\.app$/,  // Any Vercel deployment for this project
+        'https://sparkgen-api.onrender.com',
+        'https://sparkgen.onrender.com'
+      ]
     : 'http://localhost:5173',
   credentials: true,
   // Add custom headers to handle private network access
   exposedHeaders: ['Access-Control-Allow-Private-Network'],
-  // Add a preflightContinue option to ensure our custom headers work
-  preflightContinue: false,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Add a middleware to handle the private network access header

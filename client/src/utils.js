@@ -202,7 +202,7 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
                     // Don't spam the console with these network errors
                     if (retryCount === 0) {
                         // Only log on first retry
-                        const errorMsg = `Log server error: ${err.message || 'Network error'}`;
+                        const errorMsg = `Failed to send logs: ${err.message || 'Network error'}`;
 
                         // Use the original console method to avoid recursion
                         const originalError = console.__originalError || console.error;

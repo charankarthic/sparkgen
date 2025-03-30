@@ -36,19 +36,27 @@ app.enable('strict routing'); // Be consistent with URL paths
 // Middleware setup
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? ['https://sparkgen.vercel.app', 'https://sparkgen-chi.vercel.app', 'https://sparkgen-api.onrender.com', 'https://sparkgen.onrender.com']
+    ? [
+        'https://sparkgen.vercel.app',
+        'https://sparkgen-chi.vercel.app',
+        'https://sparkgen-api.onrender.com',
+        'https://sparkgen.onrender.com',
+        // Add any additional Vercel deployment URLs here
+      ]
     : 'http://localhost:5173',
   credentials: true,
-  // Add custom headers to handle private network access
-  exposedHeaders: ['Access-Control-Allow-Private-Network'],
-  // Add a preflightContinue option to ensure our custom headers work
-  preflightContinue: false,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
 }));
 
-// Add a middleware to handle the private network access header
+// Add middleware to properly handle options requests with appropriate headers
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Private-Network', 'true');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   next();
 });
 

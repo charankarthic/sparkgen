@@ -4,7 +4,6 @@ import { Brain, Book, Code, Beaker, Shuffle, GraduationCap } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { getQuizzes } from "@/api/quiz";
-import { QuizSymbols } from "@/components/QuizSymbols";
 import { ShiningEffect } from "@/components/ShiningEffect";
 
 const QUIZ_ICONS = {
@@ -65,9 +64,6 @@ export function Games() {
   return (
     <div className="space-y-6 relative">
       <h1 className="text-3xl font-bold">Games</h1>
-
-      {/* Background symbols */}
-      <QuizSymbols />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {quizzes.map((quiz) => {

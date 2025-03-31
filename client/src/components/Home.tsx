@@ -8,7 +8,7 @@ import { getQuizzes } from "@/api/quiz";
 import { useAuth } from "@/contexts/AuthContext";
 
 // Import appropriate quiz-related icons
-import { Calculator, Book, Code, Flask, ScanText, FileText } from "lucide-react";
+import { Calculator, Book, Code, TestTube, ScanText, FileText } from "lucide-react";
 
 export function Home() {
   const { isAuthenticated } = useAuth();
@@ -27,7 +27,7 @@ export function Home() {
       case 'coding':
         return <Code className="h-5 w-5 text-green-500" />;
       case 'science':
-        return <Flask className="h-5 w-5 text-purple-500" />;
+        return <TestTube className="h-5 w-5 text-purple-500" />;
       case 'word scramble':
         return <ScanText className="h-5 w-5 text-rose-500" />;
       case 'grammar':

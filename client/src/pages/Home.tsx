@@ -7,28 +7,6 @@ import { getUserProfile } from "@/api/user";
 import { getQuizzes } from "@/api/quiz";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Define symbols for each quiz type
-const QUIZ_SYMBOLS = {
-  math: ["➕", "➖", "✖️", "➗", "π", "∑", "√", "∞"],
-  general: ["🌍", "📚", "🔍", "💡", "🏛️", "🧩", "🎓"],
-  coding: ["</>", "{ }", "[]", "==", "&&", "||", "#", "function()"],
-  science: ["⚗️", "🧪", "🔬", "🧬", "⚛️", "🧲", "📊"],
-  word: ["🔤", "📝", "🔡", "📄", "📔", "🖋️", "✏️"],
-  grammar: [".", "?", "!", ",", ":", ";", "\"\"", "()"],
-};
-
-// Colors for the symbols
-const SYMBOL_COLORS = [
-  "text-blue-500",
-  "text-green-500",
-  "text-yellow-500",
-  "text-red-500",
-  "text-indigo-500",
-  "text-orange-500",
-  "text-teal-500",
-  "text-pink-500",
-];
-
 export function Home() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -41,38 +19,6 @@ export function Home() {
       getQuizzes().then(setQuizzes);
     }
   }, [isAuthenticated]);
-
-  const renderSymbols = (quizType: string, count: number = 6) => {
-    const symbols = QUIZ_SYMBOLS[quizType as keyof typeof QUIZ_SYMBOLS] || QUIZ_SYMBOLS.general;
-    const animationClasses = ["animate-float", "animate-pulse-slow", "animate-bounce"];
-
-    return Array.from({ length: count }).map((_, index) => {
-      const symbol = symbols[index % symbols.length];
-      const color = SYMBOL_COLORS[index % SYMBOL_COLORS.length];
-      const animation = animationClasses[index % animationClasses.length];
-
-      // Position each symbol randomly around the card
-      const style = {
-        position: 'absolute' as const,
-        top: `${Math.random() * 100}%`,
-        left: `${Math.random() * 100}%`,
-        fontSize: `${Math.random() * 1 + 0.8}rem`,
-        opacity: Math.random() * 0.5 + 0.3,
-        transform: `rotate(${Math.random() * 360}deg)`,
-        zIndex: 0,
-      };
-
-      return (
-        <span
-          key={`${quizType}-symbol-${index}`}
-          className={`${color} ${animation}`}
-          style={style}
-        >
-          {symbol}
-        </span>
-      );
-    });
-  };
 
   if (!isAuthenticated) {
     return (
@@ -128,9 +74,6 @@ export function Home() {
               key={quiz._id}
               className="relative"
             >
-              {/* Animated symbols */}
-              {renderSymbols(quiz.type)}
-
               <Card
                 className="animate-fade-in relative z-10"
                 style={{ animationDelay: `${index * 100}ms` }}

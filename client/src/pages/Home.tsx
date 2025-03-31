@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
 import { getUserProfile } from "@/api/user";
 import { getQuizzes } from "@/api/quiz";
 import { useAuth } from "@/contexts/AuthContext";
+// Import QuizSymbols component
+import QuizSymbols from "@/components/QuizSymbols";
 
 export function Home() {
   const { isAuthenticated } = useAuth();
@@ -74,6 +76,8 @@ export function Home() {
               key={quiz._id}
               className="relative"
             >
+              {/* Add QuizSymbols component here */}
+              <QuizSymbols quizType={quiz.type} />
               <Card
                 className="animate-fade-in relative z-10"
                 style={{ animationDelay: `${index * 100}ms` }}

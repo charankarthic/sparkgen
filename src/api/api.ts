@@ -1,31 +1,13 @@
-import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-
-// Define interface that extends AxiosInstance with our custom methods
-interface ApiInstance extends AxiosInstance {
-  ping: () => Promise<boolean>;
-}
-
-// Get the API base URL from environment variables or use dynamic detection
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ||
-  (window.location.hostname.includes('vercel.app')
-    ? 'https://sparkgen-api.onrender.com'
-    : window.location.origin.includes('localhost')
-      ? 'http://localhost:3000'
-      : window.location.origin);
-
-console.log('Using API base URL:', API_BASE_URL);
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Important for CORS with credentials
-  timeout: 10000, // 10 second timeout
   validateStatus: (status) => {
     return status >= 200 && status < 300;
   },
-}) as ApiInstance;
+});
 
 let accessToken: string | null = null;
 
@@ -102,16 +84,5 @@ api.interceptors.response.use(
     return Promise.reject(error); // Pass other errors through
   }
 );
-
-// Add a simple ping function to test connectivity
-api.ping = async () => {
-  try {
-    await axios.get(`${API_BASE_URL}/api/logs/ping`, { timeout: 3000 });
-    return true;
-  } catch (error) {
-    console.error('Server ping failed:', error);
-    return false;
-  }
-};
 
 export default api;

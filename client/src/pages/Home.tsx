@@ -1,20 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trophy, Star, Zap, Brain, Book, Code, Beaker, Shuffle, GraduationCap } from "lucide-react";
+import { Trophy, Star, Zap } from "lucide-react";
 import { Button } from "@/components/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
 import { getUserProfile } from "@/api/user";
 import { getQuizzes } from "@/api/quiz";
 import { useAuth } from "@/contexts/AuthContext";
-
-const QUIZ_ICONS = {
-  math: Brain,
-  general: Book,
-  coding: Code,
-  science: Beaker,
-  word: Shuffle,
-  grammar: GraduationCap,
-};
 
 // Define symbols for each quiz type
 const QUIZ_SYMBOLS = {

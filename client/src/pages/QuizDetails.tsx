@@ -48,8 +48,8 @@ export function QuizDetails() {
     };
   }, [id, location.search, toast]);
 
-  // Define an async function to fetch quiz data with regenerate parameter
-  async function fetchQuiz(regenerate = false) {
+  // Define an async function to fetch quiz data with regenerate parameter and retries
+  async function fetchQuiz(regenerate = false, retryCount = 0) {
     if (!id) return;
 
     // If we already have a fetch promise, return it
@@ -68,7 +68,7 @@ export function QuizDetails() {
       setLoading(true);
       fetchInProgress.current = true;
 
-      console.log(`Fetching quiz details for ID: ${id}, regenerate: ${regenerate}`);
+      console.log(`Fetching quiz details for ID: ${id}, regenerate: ${regenerate}, retry: ${retryCount}`);
 
       // Store the promise in the ref
       fetchPromiseRef.current = getQuizQuestions(id, regenerate);
@@ -84,9 +84,36 @@ export function QuizDetails() {
       return data;
     } catch (error) {
       console.error("Error fetching quiz:", error);
+
+      // Check if it's a timeout error and we haven't reached max retries
+      if (error instanceof Error &&
+          error.message.includes('timeout') &&
+          retryCount < 3) {
+
+        // Clear the fetch promise ref so we can retry
+        fetchPromiseRef.current = null;
+        fetchInProgress.current = false;
+
+        // Show a toast notification about retrying
+        toast({
+          title: "Quiz generation taking longer than expected",
+          description: `Retrying attempt ${retryCount + 1} of 3...`,
+          variant: "default",
+        });
+
+        // Wait a moment before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Retry with incremented retry count
+        return fetchQuiz(regenerate, retryCount + 1);
+      }
+
+      // Show error toast for final failure or non-timeout errors
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to load quiz questions. Please try again.",
+        description: error instanceof Error
+          ? error.message
+          : "Failed to load quiz questions. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -210,7 +237,11 @@ export function QuizDetails() {
         <Card className={noTransitionClass}>
           <CardContent className="flex flex-col items-center py-10">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-            <p>Generating quiz questions... This might take a few moments.</p>
+            <p className="text-center mb-2">Generating quiz questions... This might take a few moments.</p>
+            <p className="text-sm text-muted-foreground text-center">
+              Our AI is working hard to create personalized questions for you.
+              <br />Complex quizzes may take up to 30 seconds to generate.
+            </p>
           </CardContent>
         </Card>
       </div>

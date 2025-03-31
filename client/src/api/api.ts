@@ -16,7 +16,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true, // Important for CORS with credentials
-  timeout: 10000, // 10 second timeout
+  timeout: 30000, // Increased from 10000 to 30000 (30 seconds)
   validateStatus: (status) => {
     return status >= 200 && status < 300;
   },
@@ -32,6 +32,11 @@ api.interceptors.request.use(
       console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`);
     }
 
+    // Add request logging for debugging
+    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`,
+      config.params ? `Params: ${JSON.stringify(config.params)}` : '',
+      config.data ? `Data: ${JSON.stringify(config.data)}` : '');
+
     if (!accessToken) {
       accessToken = localStorage.getItem('accessToken');
     }
@@ -44,18 +49,29 @@ api.interceptors.request.use(
   },
   (error: AxiosError) => {
     console.error('Request error:', error.message);
+    console.error('API Request Error:', error);
     return Promise.reject(error);
   }
 );
 
 // Axios response interceptor: Handle 401 errors
 api.interceptors.response.use(
-  (response) => response, // If the response is successful, return it
+  (response) => {
+    console.log(`API Response: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
+    return response;
+  },
   async (error: AxiosError) => {
     // Handle network errors
     if (error.message === 'Network Error') {
       console.error('Network error - unable to connect to API');
       return Promise.reject(new Error('Unable to connect to server. Please check your internet connection.'));
+    }
+
+    console.error('API Response Error:', error);
+    if (error.response) {
+      console.error(`Status: ${error.response.status}`, error.response.data);
+    } else if (error.request) {
+      console.error('No response received:', error.request);
     }
 
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };

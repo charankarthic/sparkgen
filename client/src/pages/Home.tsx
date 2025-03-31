@@ -1,11 +1,42 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trophy, Star, Zap } from "lucide-react";
+import { Trophy, Star, Zap, Brain, Book, Code, Beaker, Shuffle, GraduationCap } from "lucide-react";
 import { Button } from "@/components/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
 import { getUserProfile } from "@/api/user";
 import { getQuizzes } from "@/api/quiz";
 import { useAuth } from "@/contexts/AuthContext";
+
+const QUIZ_ICONS = {
+  math: Brain,
+  general: Book,
+  coding: Code,
+  science: Beaker,
+  word: Shuffle,
+  grammar: GraduationCap,
+};
+
+// Define symbols for each quiz type
+const QUIZ_SYMBOLS = {
+  math: ["➕", "➖", "✖️", "➗", "π", "∑", "√", "∞"],
+  general: ["🌍", "📚", "🔍", "💡", "🏛️", "🧩", "🎓"],
+  coding: ["</>", "{ }", "[]", "==", "&&", "||", "#", "function()"],
+  science: ["⚗️", "🧪", "🔬", "🧬", "⚛️", "🧲", "📊"],
+  word: ["🔤", "📝", "🔡", "📄", "📔", "🖋️", "✏️"],
+  grammar: [".", "?", "!", ",", ":", ";", "\"\"", "()"],
+};
+
+// Colors for the symbols
+const SYMBOL_COLORS = [
+  "text-blue-500",
+  "text-green-500",
+  "text-yellow-500",
+  "text-red-500",
+  "text-indigo-500",
+  "text-orange-500",
+  "text-teal-500",
+  "text-pink-500",
+];
 
 export function Home() {
   const { isAuthenticated } = useAuth();
@@ -19,6 +50,38 @@ export function Home() {
       getQuizzes().then(setQuizzes);
     }
   }, [isAuthenticated]);
+
+  const renderSymbols = (quizType: string, count: number = 6) => {
+    const symbols = QUIZ_SYMBOLS[quizType as keyof typeof QUIZ_SYMBOLS] || QUIZ_SYMBOLS.general;
+    const animationClasses = ["animate-float", "animate-pulse-slow", "animate-bounce"];
+
+    return Array.from({ length: count }).map((_, index) => {
+      const symbol = symbols[index % symbols.length];
+      const color = SYMBOL_COLORS[index % SYMBOL_COLORS.length];
+      const animation = animationClasses[index % animationClasses.length];
+
+      // Position each symbol randomly around the card
+      const style = {
+        position: 'absolute' as const,
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`,
+        fontSize: `${Math.random() * 1 + 0.8}rem`,
+        opacity: Math.random() * 0.5 + 0.3,
+        transform: `rotate(${Math.random() * 360}deg)`,
+        zIndex: 0,
+      };
+
+      return (
+        <span
+          key={`${quizType}-symbol-${index}`}
+          className={`${color} ${animation}`}
+          style={style}
+        >
+          {symbol}
+        </span>
+      );
+    });
+  };
 
   if (!isAuthenticated) {
     return (
@@ -70,24 +133,32 @@ export function Home() {
         <h2 className="text-2xl font-bold animate-fade-in">Available Quizzes</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {quizzes.map((quiz, index) => (
-            <Card 
+            <div
               key={quiz._id}
-              className="animate-fade-in"
-              style={{ animationDelay: `${index * 100}ms` }}
+              className="relative"
+              style={{ position: 'relative', height: '100%', minHeight: '300px', width: '100%' }}
             >
-              <CardHeader>
-                <CardTitle>{quiz.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{quiz.description}</p>
-                <Button
-                  className="mt-4 w-full"
-                  onClick={() => navigate(`/games/${quiz._id}`)}
-                >
-                  Start Quiz
-                </Button>
-              </CardContent>
-            </Card>
+              {/* Animated symbols */}
+              {renderSymbols(quiz.type)}
+
+              <Card
+                className="animate-fade-in relative z-10"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <CardHeader>
+                  <CardTitle>{quiz.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">{quiz.description}</p>
+                  <Button
+                    className="mt-4 w-full"
+                    onClick={() => navigate(`/games/${quiz._id}`)}
+                  >
+                    Start Quiz
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           ))}
         </div>
       </div>

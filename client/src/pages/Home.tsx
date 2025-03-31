@@ -127,7 +127,6 @@ export function Home() {
             <div
               key={quiz._id}
               className="relative"
-              style={{ position: 'relative', height: '100%', minHeight: '300px', width: '100%' }}
             >
               {/* Animated symbols */}
               {renderSymbols(quiz.type)}

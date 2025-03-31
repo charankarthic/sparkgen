@@ -24,6 +24,9 @@ export function QuizDetails() {
   const [results, setResults] = useState<any>(null);
   const [answeredQuestions, setAnsweredQuestions] = useState<any[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
+  // Add new state for score calculation phase
+  const [calculatingScore, setCalculatingScore] = useState(false);
+  const [isPerfectScore, setIsPerfectScore] = useState(false);
 
   // Get window size for confetti
   const { width, height } = useWindowSize();
@@ -165,11 +168,26 @@ export function QuizDetails() {
       }
 
       if (id) {
+        // Show the calculating score screen
+        setCalculatingScore(true);
+
         const result = await submitQuiz({
           quizId: id,
           answers,
         });
+
+        // Check for perfect score immediately to start celebrations
+        if (result.score === 100) {
+          setIsPerfectScore(true);
+          setShowConfetti(true);
+
+          // Add a delay to show the celebration screen before showing results
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+
+        // Now show the final results
         setResults(result);
+        setCalculatingScore(false);
 
         // Save the answered questions with correct answers for display
         if (result.questionsWithAnswers) {
@@ -180,15 +198,6 @@ export function QuizDetails() {
           title: "Quiz Submitted",
           description: `You scored ${result.correct} out of ${result.total} (${result.score}%)`,
         });
-
-        // Show confetti animation for perfect score
-        if (result.score === 100) {
-          setShowConfetti(true);
-          // Hide confetti after 8 seconds
-          setTimeout(() => {
-            setShowConfetti(false);
-          }, 8000);
-        }
 
         // Show achievement toast if earned
         if (result.achievements && result.achievements.length > 0) {
@@ -222,6 +231,7 @@ export function QuizDetails() {
       }
     } catch (error) {
       console.error("Error submitting quiz:", error);
+      setCalculatingScore(false);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to submit quiz. Please try again.",
@@ -242,6 +252,72 @@ export function QuizDetails() {
               Our AI is working hard to create personalized questions for you.
               <br />Complex quizzes may take up to 30 seconds to generate.
             </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Add a new state for calculating score with celebration animations
+  if (calculatingScore) {
+    return (
+      <div className="space-y-6">
+        {/* Show confetti for perfect scores during calculation */}
+        {isPerfectScore && (
+          <Confetti
+            width={width}
+            height={height}
+            recycle={true}
+            numberOfPieces={500}
+            gravity={0.2}
+            colors={['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4']}
+          />
+        )}
+
+        <h1 className="text-3xl font-bold">Calculating Results</h1>
+
+        <Card className={noTransitionClass}>
+          <CardContent className="flex flex-col items-center py-10">
+            {isPerfectScore ? (
+              <>
+                {/* Perfect score celebration */}
+                <div className="text-4xl font-bold text-center mb-4 animate-pulse">
+                  🎉 PERFECT SCORE! 🎉
+                </div>
+
+                <div className="flex justify-center gap-4 mb-6">
+                  {['🏆', '💯', '🌟', '✨', '🎊'].map((emoji, i) => (
+                    <span
+                      key={i}
+                      className="text-3xl"
+                      style={{
+                        animation: 'bounce 1s ease infinite',
+                        animationDelay: `${i * 0.2}s`
+                      }}
+                    >
+                      {emoji}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="text-xl font-medium text-center mb-8">
+                  Amazing job! You've answered everything correctly!
+                </div>
+
+                <div className="text-center text-sm text-muted-foreground">
+                  Preparing your results...
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Regular score calculation */}
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                <p className="text-center mb-2">Calculating your score...</p>
+                <p className="text-sm text-muted-foreground text-center">
+                  We're tallying your results and preparing your feedback.
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

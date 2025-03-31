@@ -29,8 +29,8 @@ export const checkServerReachable = async (url: string): Promise<boolean> => {
       mode: 'no-cors',
       cache: 'no-store',
     });
-
-    return true;
+    
+    return response.ok; // Now using the response variable
   } catch (error) {
     console.error('Server unreachable:', error);
     return false;

@@ -1,107 +1,295 @@
-# Sparkgen
+# Sparkgen - AI-Powered Gamified Learning Platform
 
-Sparkgen is an AI-powered gamified learning platform. It enables users to play AI-generated quizzes, track achievements, and interact with an AI assistant for learning support. The platform leverages an API key from DeepSeek R1 via OpenRouter for generating quiz content and providing chatbot assistance.
+Sparkgen is an interactive learning platform that uses AI to generate personalized quiz content and provide learning assistance. It features gamified quizzes, achievements, and an AI assistant to support users in their learning journey.
 
-## Overview
+![Sparkgen Platform](https://i.imgur.com/YOUR_DEMO_IMAGE.png)
 
-Sparkgen utilizes a client-server architecture with a React frontend and a Node.js + Express backend. The frontend is served using Vite, and the backend connects to a MongoDB Atlas database. 
+## Table of Contents
 
-The platform is designed to provide a dynamic and engaging learning experience through AI-generated quizzes that adjust their difficulty based on user performance, and an AI chatbot that offers personalized learning support.
-
-### Technologies Used
-- Frontend: React, Vite, Tailwind CSS, shadcn-ui component library
-- Backend: Node.js, Express, MongoDB Atlas
-- AI Integration: DeepSeek R1 via OpenRouter
-- Authentication: JWT
-- Others: Axios, bcrypt, pino, dotenv, and more
-
-### Project Structure
-The project is divided into two main parts:
-1. **Frontend**: Located in the `client/` folder
-   - **Pages**: `client/src/pages/`
-   - **Components**: `client/src/components/`
-   - **API Calls**: `client/src/api/`
-   - **Styling**: Tailwind CSS, with usage of custom CSS for animations
-
-2. **Backend**: Located in the `server/` folder
-   - **Routes**: `server/routes/`
-   - **Models**: `server/models/`
-   - **Services**: `server/services/`
-   - **Utility Functions**: `server/utils/`
+- [Features](#features)
+- [Project Architecture](#project-architecture)
+- [Local Development Setup](#local-development-setup)
+- [Deployment Guide](#deployment-guide)
+  - [Frontend Deployment (Vercel)](#frontend-deployment-vercel)
+  - [Backend Deployment (Render)](#backend-deployment-render)
+- [Environment Variables](#environment-variables)
+- [API Documentation](#api-documentation)
+- [Technologies Used](#technologies-used)
 
 ## Features
 
-1. **Authentication Pages**: User can register, login, and logout.
-2. **Home Page**:
-   - Displays a welcome message, XP points, levels, recent achievements, and available AI-powered quizzes.
-3. **Games Page**:
-   - Displays various AI-powered quizzes (Math, Coding, Science, etc.) with dynamically generated questions.
-4. **Achievements Page**:
-   - Shows badges earned, XP points, levels, unlockable challenges, and leaderboard rankings.
-5. **Profile Page**:
-   - Displays user stats, progress, and personalized game recommendations.
-6. **AI Chatbot Assistant**:
-   - An AI tutor providing hints and explanations for quiz questions.
-7. **API Integration**:
-   - Dynamically generates quiz questions via DeepSeek R1 API.
-8. **API Endpoints**:
-   - Various endpoints for fetching quizzes, submitting answers, retrieving user stats, and AI chatbot interactions.
+### Authentication
+- User registration and login
+- JWT-based authentication with access and refresh tokens
 
-## Getting Started
+### Home Page
+- Welcome message with user statistics
+- XP points, levels, and recent achievements display
+- Available AI-powered quizzes with quick replay functionality
 
-### Requirements
+### Games Page
+- 6 AI-powered quiz types: Math, Escape Room, Coding, Science, Word Scramble, and Grammar
+- Dynamic difficulty adjustment based on user performance
+- AI-generated questions tailored to user's level
 
-To run this project, you will need:
-- Node.js and npm installed on your machine
-- MongoDB Atlas account (or local MongoDB installation)
-- Environment variables setup (e.g., `.env` file with MongoDB connection string, API keys)
+### Achievements Page
+- Badges earned and unlockable challenges
+- User XP points and level progression
+- Leaderboard rankings
 
-### Quickstart
+### Profile Page
+- User statistics and progress tracking
+- Personalized game recommendations
+- Account management options
 
-#### Setup the repository
+### AI Chatbot Assistant
+- Floating assistant accessible from all pages
+- Personalized help and explanations
+- Step-by-step solution guidance
+
+## Project Architecture
+
+Sparkgen is built using a client-server architecture:
+
+### Frontend
+- React.js with TypeScript
+- Vite build tool for fast development
+- Shadcn UI components with Tailwind CSS
+- React Router for client-side routing
+
+### Backend
+- Node.js with Express
+- MongoDB Atlas for database storage
+- JWT-based authentication
+- AI integration with DeepSeek R1 via OpenRouter
+
+### API Integration
+- RESTful API endpoints
+- AI-powered quiz generation
+- Real-time chat assistance
+
+## Local Development Setup
+
+### Prerequisites
+- Node.js (v18 or higher)
+- npm or yarn
+- MongoDB (local or Atlas connection)
+- API keys for OpenRouter and OpenAI
+
+### Installation Steps
 
 1. Clone the repository:
-    ```bash
-    git clone https://github.com/charankarthic/sparkgen.git
-    cd sparkgen
-    ```
+   ```
+   git clone https://github.com/charankarthic/sparkgen.git
+   cd sparkgen
+   ```
 
-2. Setup environment variables:
-   - Create `.env` files in the `client/` and `server/` directories based on `.env.example` provided.
+2. Install dependencies:
+   ```
+   npm install
+   ```
 
-#### Install dependencies
+3. Set up environment variables:
+   - Create `.env` file in the root directory
+   - Create `.env` file in the server directory
+   - Create `.env.development` and `.env.production` in the client directory
+   (See [Environment Variables](#environment-variables) section for details)
 
-1. Install frontend dependencies:
-    ```bash
-    cd client
-    npm install
-    ```
+4. Start the development server:
+   ```
+   npm run start
+   ```
+   This will start both the frontend (port 5173) and backend (port 3000) concurrently.
 
-2. Install backend dependencies:
-    ```bash
-    cd ../server
-    npm install
-    ```
+5. Access the application at `http://localhost:5173`
 
-#### Run the project
+## Deployment Guide
 
-1. Start the backend server:
-    ```bash
-    npm run dev
-    ```
+### Frontend Deployment (Vercel)
 
-2. Start the frontend server:
-    ```bash
-    cd ../client
-    npm run dev
-    ```
+Vercel is recommended for deploying the React frontend due to its simplicity and performance optimizations.
 
-3. Access the application:
-    Open your browser and navigate to `http://localhost:5173`.
+#### Step 1: Prepare Your Repository
 
-### License
+Ensure your code is pushed to GitHub at: https://github.com/charankarthic/sparkgen.git
 
-The project is proprietary (not open source). 
+#### Step 2: Set Up Vercel Project
 
-Copyright (c) 2024.
+1. Sign up or log in to [Vercel](https://vercel.com)
+2. Click "Add New" → "Project"
+3. Import your GitHub repository (sparkgen)
+4. Configure the project:
+   - **Framework Preset**: Select "Vite"
+   - **Root Directory**: `client`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
 
+#### Step 3: Configure Environment Variables
+
+Add the following environment variables:
+- `VITE_API_BASE_URL`: Your backend API URL (e.g., https://sparkgen-api.onrender.com)
+
+#### Step 4: Deploy
+
+1. Click "Deploy"
+2. Wait for the build to complete
+3. Your frontend will be available at the assigned Vercel URL
+
+#### Troubleshooting TypeScript Errors on Vercel
+
+If you encounter TypeScript errors during Vercel deployment (like the 53 errors mentioned in the logs), follow these steps:
+
+1. Fix the TypeScript errors in the API files:
+   - Update `client/src/api/api.ts` to properly handle Axios types
+   - Ensure error handling follows the pattern: `throw new Error(error?.response?.data?.error || error.message)`
+   - Add proper type checking for potentially undefined values
+
+2. Update the `vercel.json` file to include:
+   ```json
+   {
+     "rewrites": [
+       { "source": "/api/(.*)", "destination": "https://sparkgen-api.onrender.com/api/$1" }
+     ],
+     "headers": [
+       {
+         "source": "/(.*)",
+         "headers": [
+           { "key": "Access-Control-Allow-Origin", "value": "*" },
+           { "key": "Access-Control-Allow-Methods", "value": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS" },
+           { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
+         ]
+       }
+     ]
+   }
+   ```
+
+3. Disable TypeScript build errors (if necessary) by adding to your `vercel.json`:
+   ```json
+   {
+     "buildCommand": "CI=false npm run build"
+   }
+   ```
+
+### Backend Deployment (Render)
+
+Render provides easy deployment for Node.js applications with persistent database connections.
+
+#### Step 1: Create a Render Account
+
+Sign up at [Render](https://render.com) if you don't already have an account.
+
+#### Step 2: Create a New Web Service
+
+1. From your Render dashboard, click "New" → "Web Service"
+2. Connect your GitHub repository
+3. Configure the service:
+   - **Name**: `sparkgen-api`
+   - **Root Directory**: Leave empty (or specify `server` if your backend is in a subdirectory)
+   - **Environment**: `Node`
+   - **Build Command**: `cd server && npm install`
+   - **Start Command**: `cd server && node server.js`
+
+#### Step 3: Configure Environment Variables
+
+Add all necessary environment variables from your `.env` file:
+- `PORT`: 3000 (Render will override this with its own PORT)
+- `DATABASE_URL`: Your MongoDB Atlas connection string
+- `JWT_SECRET`: Your secret key for JWT tokens
+- `OPENROUTER_API_KEY`: Your OpenRouter API key
+- `OPENAI_API_KEY`: Your OpenAI API key (backup)
+- `ANTHROPIC_API_KEY`: Your Anthropic API key (optional)
+- `NODE_ENV`: production
+
+#### Step 4: Deploy
+
+1. Click "Create Web Service"
+2. Wait for the build and deployment to complete
+3. Your backend will be available at `https://sparkgen-api.onrender.com`
+
+#### Step 5: Verify CORS Settings
+
+Ensure your `server.js` has CORS configured to allow requests from your Vercel frontend domain:
+
+```javascript
+app.use(cors({
+  origin: [
+    'https://sparkgen.vercel.app',
+    'https://sparkgen-chi.vercel.app',
+    'https://sparkgen-git-main-charankarthic.vercel.app',
+    /^https:\/\/sparkgen-.*\.vercel\.app$/
+  ],
+  credentials: true
+}));
+```
+
+## Environment Variables
+
+### Frontend (.env.production in client directory)
+```
+VITE_API_BASE_URL=https://sparkgen-api.onrender.com
+```
+
+### Backend (.env in server directory)
+```
+PORT=3000
+DATABASE_URL=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>?retryWrites=true&w=majority
+JWT_SECRET=<your_jwt_secret>
+OPENROUTER_API_KEY=<your_openrouter_api_key>
+OPENAI_API_KEY=<your_openai_api_key>
+ANTHROPIC_API_KEY=<your_anthropic_api_key>
+NODE_ENV=production
+```
+
+## API Documentation
+
+### Authentication Endpoints
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - Log in and get tokens
+- `POST /api/auth/logout` - Log out a user
+- `POST /api/auth/refresh` - Refresh access token
+
+### Quiz Endpoints
+- `GET /api/quiz` - Get all available quizzes
+- `GET /api/quiz/:id` - Get quiz by ID
+- `GET /api/quiz/:id/questions` - Generate questions for a quiz
+- `POST /api/quiz/submit` - Submit quiz answers
+
+### User Endpoints
+- `GET /api/user/profile` - Get user profile
+- `GET /api/user/leaderboard` - Get leaderboard
+- `PUT /api/user/xp` - Update user XP
+- `POST /api/user/achievements` - Add user achievement
+- `PUT /api/user/displayName` - Update display name
+
+### Chat Endpoint
+- `POST /api/chat` - Send message to AI assistant
+
+## Technologies Used
+
+- **Frontend**:
+  - React.js with TypeScript
+  - Vite build tool
+  - Tailwind CSS
+  - Shadcn UI components
+  - React Router
+  - Axios for API requests
+
+- **Backend**:
+  - Node.js and Express
+  - MongoDB with Mongoose
+  - JWT for authentication
+  - OpenRouter API for AI integration
+  - OpenAI API (backup)
+
+- **Deployment**:
+  - Vercel for frontend
+  - Render for backend
+  - MongoDB Atlas for database
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

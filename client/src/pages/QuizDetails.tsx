@@ -67,10 +67,14 @@ export function QuizDetails() {
       return;
     }
 
-    try {
+    // Set loading state at the beginning - this will stay true during all retries
+    if (retryCount === 0) {
       setLoading(true);
-      fetchInProgress.current = true;
+    }
 
+    fetchInProgress.current = true;
+
+    try {
       console.log(`Fetching quiz details for ID: ${id}, regenerate: ${regenerate}, retry: ${retryCount}`);
 
       // Store the promise in the ref
@@ -84,20 +88,19 @@ export function QuizDetails() {
       console.log(`Questions after setting:`, data.questions ? data.questions.length : 0);
       setQuizTitle(data.title || "Quiz");
 
+      // Success - set loading to false
+      setLoading(false);
       return data;
     } catch (error) {
       console.error("Error fetching quiz:", error);
 
-      // Check if it's a timeout error and we haven't reached max retries
-      if (error instanceof Error &&
-          error.message.includes('timeout') &&
-          retryCount < 3) {
-
+      // Check if we haven't reached max retries (3 attempts total)
+      if (retryCount < 2) {  // This allows for a total of 3 attempts (0, 1, 2)
         // Clear the fetch promise ref so we can retry
         fetchPromiseRef.current = null;
         fetchInProgress.current = false;
 
-        // Show a toast notification about retrying
+        // Show a toast notification about retrying, but keep loading state true
         toast({
           title: "Quiz generation taking longer than expected",
           description: `Retrying attempt ${retryCount + 1} of 3...`,
@@ -107,26 +110,104 @@ export function QuizDetails() {
         // Wait a moment before retrying
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // Retry with incremented retry count
+        // Retry with incremented retry count - don't change loading state yet
         return fetchQuiz(regenerate, retryCount + 1);
       }
 
-      // Show error toast for final failure or non-timeout errors
+      // We've reached max retries (3 attempts), now show error toast and use mock data
       toast({
-        title: "Error",
-        description: error instanceof Error
-          ? error.message
-          : "Failed to load quiz questions. Please try again.",
+        title: "Quiz Generation Failed",
+        description: "Failed to load quiz questions after multiple attempts. Showing sample questions instead.",
         variant: "destructive",
       });
-    } finally {
+
+      // Fall back to mock data after 3 failed attempts
+      const mockQuestions = generateMockQuestions(id || "unknown");
+      setQuestions(mockQuestions);
+
+      // If we already have a title from a previous attempt, keep it; otherwise use a generic one
+      if (!quizTitle) {
+        const quizTypes = {
+          "67ecf11d5b90687f1edb5875": "General Knowledge",
+          "67ecf11d5b90687f1edb5876": "Math",
+          "67ecf11d5b90687f1edb5877": "Science",
+          "67ecf11d5b90687f1edb5878": "Coding",
+          "67ecf11d5b90687f1edb5879": "Word Scramble",
+          "67ecf11d5b90687f1edb587a": "Grammar"
+        };
+
+        const safeId = id as keyof typeof quizTypes;
+        setQuizTitle(quizTypes[safeId] || "Sample Quiz");
+      }
+
+      // Finally set loading to false after all retries and mock data generation
       setLoading(false);
-      fetchInProgress.current = false;
+    } finally {
+      // Only reset fetchInProgress at the final attempt
+      if (retryCount >= 2) {
+        fetchInProgress.current = false;
+      }
+
       // Clear the promise ref after a short delay to prevent immediate refetching
-      setTimeout(() => {
-        fetchPromiseRef.current = null;
-      }, 1000);
+      // but only for the final attempt
+      if (retryCount >= 2) {
+        setTimeout(() => {
+          fetchPromiseRef.current = null;
+        }, 1000);
+      }
     }
+  }
+
+  // Helper function to generate mock questions when all attempts fail
+  function generateMockQuestions(quizId: string) {
+    // Basic mock questions as fallback
+    return [
+      {
+        _id: `mock_${quizId}_1`,
+        question: "What is the main purpose of JavaScript?",
+        options: [
+          "To create dynamic content in web pages",
+          "To style web pages",
+          "To define the structure of web pages",
+          "To create databases"
+        ],
+        answer: "To create dynamic content in web pages"
+      },
+      {
+        _id: `mock_${quizId}_2`,
+        question: "Which of these is a JavaScript framework?",
+        options: ["HTML5", "CSS3", "React", "SQL"],
+        answer: "React"
+      },
+      {
+        _id: `mock_${quizId}_3`,
+        question: "What does API stand for?",
+        options: [
+          "Application Programming Interface",
+          "Application Process Integration",
+          "Automated Programming Interface",
+          "Application Protocol Interface"
+        ],
+        answer: "Application Programming Interface"
+      },
+      {
+        _id: `mock_${quizId}_4`,
+        question: "Which is NOT a data type in JavaScript?",
+        options: ["String", "Boolean", "Float", "Symbol"],
+        answer: "Float"
+      },
+      {
+        _id: `mock_${quizId}_5`,
+        question: "What is the primary function of a database?",
+        options: [
+          "To store and organize data",
+          "To create user interfaces",
+          "To style web applications",
+          "To handle server requests"
+        ],
+        answer: "To store and organize data"
+      }
+    ];
   }
 
   const handleSelectAnswer = (questionId: string, answer: string) => {

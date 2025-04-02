@@ -100,3 +100,22 @@ Project Structure:
 The project is proprietary (not open source).  
 Copyright (c) 2024.
 ```
+
+## Resources and Links
+
+1. **GitHub Repository**: [Sparkgen GitHub](https://github.com/charankarthic/sparkgen)  
+
+2. **Project Report**: [Google Docs Report](https://docs.google.com/document/d/1XHui44OO8QOrSyeBulMV0WSUaO8-HP8_/edit?usp=drive_link&ouid=112572534447293046629&rtpof=true&sd=true)  
+
+3. **Demo Video**: [Watch the Demo](https://drive.google.com/file/d/1xBifSdpTJnbtQwSsuKARz_7fXxjyykQR/view?usp=drive_link)  
+
+4. **Frontend (Live Website on Vercel)**: [Sparkgen - Live Site](https://sparkgen-chi.vercel.app)  
+
+## 🚀 **Performance Notice**  
+
+> - The backend is hosted on **Render's free tier**, which puts the server to sleep after **15 minutes of inactivity**.  
+> - The **first request after inactivity may take 20-30 seconds** to load.  
+> - Since we use the **DeepSeek R1 API via OpenRouter.com**, generating **quiz questions and chatbot responses may take up to 20 seconds**.  
+> - ⏳ *We appreciate your patience while the AI processes your request!*  
+
+

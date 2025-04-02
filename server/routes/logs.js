@@ -1,20 +1,21 @@
 const express = require('express');
 const router = express.Router();
 
-// Simple log endpoint to receive logs
-router.post('/', (req, res) => {
+// Simple ping endpoint to check availability
+router.get('/ping', (req, res) => {
     try {
-        console.log('Received logs:', req.body.logs); // Log to console or save to a database
-        res.status(200).json({ message: 'Logs received' });
+        console.log('Ping request received');
+        res.status(200).json({
+            success: true,
+            message: 'Service is available'
+        });
     } catch (error) {
-        console.error('Log handling error:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        console.error('Error handling ping request:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
     }
-});
-
-// Add a ping endpoint to check availability
-router.head('/ping', (req, res) => {
-    res.status(200).end();
 });
 
 module.exports = router;

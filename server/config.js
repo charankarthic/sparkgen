@@ -13,5 +13,6 @@ module.exports = {
   openRouterUrl: process.env.OPENROUTER_URL || 'https://openrouter.ai/api/v1/chat/completions',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
   openaiApiKey: process.env.OPENAI_API_KEY, // INPUT_REQUIRED {OpenAI API key for alternative AI service}
-  anthropicApiKey: process.env.ANTHROPIC_API_KEY // INPUT_REQUIRED {Anthropic API key for Claude models}
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY, // INPUT_REQUIRED {Anthropic API key for Claude models}
+  apiRequestTimeout: 100000, // Added timeout setting (100 seconds)
 };

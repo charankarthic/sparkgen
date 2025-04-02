@@ -16,7 +16,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true, // Important for CORS with credentials
-  timeout: 30000, // Increased from 10000 to 30000 (30 seconds)
+  timeout: 100000, // Increased from 30000 to 100000 (100 seconds)
   validateStatus: (status) => {
     return status >= 200 && status < 300;
   },

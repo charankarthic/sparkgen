@@ -144,6 +144,9 @@ Copyright (c) 2024.
 
 ## 🚀 **Performance Notice** (Disclaimer)  
 
-The backend is hosted on **Render's free tier**, which puts the server to sleep after **15 minutes of inactivity**. The **first request after inactivity may take 20-30 seconds** to load.Since we use the **DeepSeek R1 API via OpenRouter.com**, generating **quiz questions and chatbot responses may take up to 20 seconds**.*We appreciate your patience while the AI processes your request!*  
+The backend is hosted on **Render's free tier**, which puts the server to sleep after **15 minutes of
+inactivity**. The **first request after inactivity may take 20-30 seconds** to load.Since we use the
+**DeepSeek R1 API via OpenRouter.com**, generating **quiz questions and chatbot responses may take up
+to 20 seconds**.*We appreciate your patience while the AI processes your request!*  
 
 

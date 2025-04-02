@@ -103,13 +103,13 @@ Copyright (c) 2024.
 
 ## Resources and Links
 
-1. **GitHub Repository**: [Sparkgen GitHub](https://github.com/charankarthic/sparkgen)  
+1. **GitHub Repository**: [Sparkgen GitHub] https://github.com/charankarthic/sparkgen
 
-2. **Project Report**: [Google Docs Report](https://docs.google.com/document/d/1XHui44OO8QOrSyeBulMV0WSUaO8-HP8_/edit?usp=drive_link&ouid=112572534447293046629&rtpof=true&sd=true)  
+2. **Project Report**: [Google Docs Report] https://docs.google.com/document/d/1XHui44OO8QOrSyeBulMV0WSUaO8-HP8_/edit?usp=drive_link&ouid=112572534447293046629&rtpof=true&sd=true
 
-3. **Demo Video**: [Watch the Demo](https://drive.google.com/file/d/1xBifSdpTJnbtQwSsuKARz_7fXxjyykQR/view?usp=drive_link)  
+3. **Demo Video**: [Watch the Demo] https://drive.google.com/file/d/1xBifSdpTJnbtQwSsuKARz_7fXxjyykQR/view?usp=drive_link  
 
-4. **Frontend (Live Website on Vercel)**: [Sparkgen - Live Site](https://sparkgen-chi.vercel.app)  
+4. **Frontend (Live Website on Vercel)**: [Sparkgen - Live Site] https://sparkgen-chi.vercel.app 
 
 ## 🚀 **Performance Notice**  
 
